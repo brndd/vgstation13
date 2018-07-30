@@ -1,8 +1,47 @@
+//**New areas**
 /area/crew_quarters/holocontrol
 	name = "Holodeck Control"
 	icon_state = "holocontrol"
 
-//Areas from Defficiency
+/area/maintenance/apmaint2
+	name = "Aft Port Maintenance"
+	icon_state = "apmaint"
+
+/area/maintenance/starboard2
+	name = "Starboard Maintenance"
+	icon_state = "smaint"
+
+/area/engineering/aux_storage
+	name = "Engineering Auxiliary Storage"
+	icon_state = "engine_storage"
+
+/area/engine/magma_engine
+	name = "Magma Engine Room"
+	icon_state = "thermo_engine"
+
+/area/derelict/bar
+	name = "\improper Derelict Bar"
+	icon_state = "bar"
+
+/area/derelict/holodeck
+	name = "\improper Derelict Holodeck"
+	icon_state = "Holodeck"
+
+//**Renamed areas**
+/area/mine/lobby
+	name = "Mining Lobby"
+
+/area/mine/production
+	name = "Mining Material Processing"
+
+/area/research_outpost/xenobot
+	name = "Xenobotany Lab"
+
+/area/research_outpost/hallway
+	name = "Research Wing Hallway"
+
+
+//*******Areas from Defficiency*******
 /area/maintenance/vault
 	name = "Vault Maintenance"
 	icon_state = "vaultmaint"
