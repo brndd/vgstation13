@@ -19,6 +19,15 @@
 	name = "Magma Engine Room"
 	icon_state = "thermo_engine"
 
+/area/maintenance/prisonsolar
+	name = "Prison Solar Maintenance"
+	icon_state = "SolarcontrolA"
+	holomap_color = HOLOMAP_AREACOLOR_ENGINEERING
+
+/area/solar/prison
+	name = "\improper Prison Solar Array"
+	icon_state = "panelsA"
+
 /area/derelict/bar
 	name = "\improper Derelict Bar"
 	icon_state = "bar"
