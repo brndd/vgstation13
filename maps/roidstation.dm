@@ -35,4 +35,5 @@
 
 ////////////////////////////////////////////////////////////////
 #include "defficiency/pipes.dm" // Atmos layered pipes.
+#include "roidstation/areas.dm"
 #include "roidstation.dmm"
