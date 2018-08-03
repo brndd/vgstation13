@@ -36,6 +36,10 @@
 	name = "\improper Derelict Holodeck"
 	icon_state = "Holodeck"
 
+/area/tcomms/storage2
+	name = "\improper Telecoms Auxiliary Storage"
+	icon_state = "primarystorage"
+
 //**Renamed areas**
 /area/mine/lobby
 	name = "Mining Lobby"
