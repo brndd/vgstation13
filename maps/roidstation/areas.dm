@@ -29,16 +29,24 @@
 	icon_state = "panelsA"
 
 /area/derelict/bar
-	name = "\improper Derelict Bar"
+	name = "Derelict Bar"
 	icon_state = "bar"
 
 /area/derelict/holodeck
-	name = "\improper Derelict Holodeck"
+	name = "Derelict Holodeck"
 	icon_state = "Holodeck"
 
 /area/tcomms/storage2
-	name = "\improper Telecoms Auxiliary Storage"
+	name = "Telecoms Auxiliary Storage"
 	icon_state = "primarystorage"
+
+/area/hallway/primary/central/toilet
+	name = "Central Primary Hallway Toilets"
+	icon_state = "toilet"
+
+/area/hallway/primary/fore/toilet
+	name = "Fore Primary Hallway Toilets"
+	icon_state = "toilet"
 
 //**Renamed areas**
 /area/mine/lobby
