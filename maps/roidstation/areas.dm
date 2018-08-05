@@ -53,6 +53,8 @@
 /area/research_outpost/hallway
 	name = "Research Wing Hallway"
 
+/area/engine/storage
+		name = "Engineering Lockers"
 
 //*******Areas from Defficiency*******
 /area/maintenance/vault
