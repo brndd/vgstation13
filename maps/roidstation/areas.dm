@@ -48,6 +48,49 @@
 	name = "Fore Primary Hallway Toilets"
 	icon_state = "toilet"
 
+/area/prison/hallway/central
+	name = "\improper Prison Central Hallway"
+	icon_state = "yellow"
+
+/area/prison/cell_block/hydroponics
+	name = "Prison Jail Hydroponics"
+	icon_state = "brig"
+
+/area/prison/lockers
+	name = "\improper Prison Equipment Storage"
+	icon_state = "security"
+
+/area/prison/armory
+	name = "\improper Prison Armory"
+	icon_state = "security"
+
+/area/prison/engineering
+	name = "\improper Prison Engineering"
+	icon_state = "storage"
+	holomap_color = HOLOMAP_AREACOLOR_ENGINEERING
+
+/area/prison/tcomms
+	name = "\improper Prison Telecomms"
+	icon_state = "ai"
+	holomap_filter = HOLOMAP_FILTER_STATIONMAP_STRATEGIC
+
+/area/science/xenobiology/specimen_0
+	name = "\improper Xenobiology Test Chamber"
+	icon_state = "xenocell1"
+
+/area/turret_protected/ai_integrity
+	name = "AI Integrity Restoration Room"
+	icon_state = "ai_upload"
+
+/area/turret_protected/aisat_tele
+	name = "AI Satellite Teleporter"
+	icon_state = "ai"
+
+/area/turret_protected/aisat_borg
+	name = "Cyborg Station"
+	icon_state = "ai"
+
+
 //**Renamed areas**
 /area/mine/lobby
 	name = "Mining Lobby"
@@ -63,6 +106,16 @@
 
 /area/engine/storage
 		name = "Engineering Lockers"
+
+/area/prison/cell_block/A
+	name = "Prison Jail"
+
+/area/security/toilet
+	name = "Security Office Toilets"
+
+/area/turret_protected/aisat_interior
+	name = "\improper AI Satellite Foyer"
+	icon_state = "ai_foyer"
 
 //*******Areas from Defficiency*******
 /area/maintenance/vault
