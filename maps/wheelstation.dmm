@@ -72510,12 +72510,6 @@
 	},
 /obj/structure/window/reinforced,
 /obj/structure/grille,
-/obj/structure/cable{
-	d1 = 4;
-	d2 = 8;
-	icon_state = "4-8";
-	pixel_y = 0
-	},
 /turf/simulated/floor/plating,
 /area/engineering/engine_singularity)
 "cAC" = (
@@ -111258,6 +111252,12 @@
 /obj/machinery/light/small{
 	dir = 1
 	},
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8";
+	pixel_y = 0
+	},
 /turf/simulated/floor/plating,
 /area/engineering/engine_singularity)
 "oEV" = (
@@ -112072,28 +112072,21 @@
 /turf/simulated/floor/engine,
 /area/engineering/supermatter_room)
 "roI" = (
-/obj/machinery/power/rad_collector{
-	anchored = 1
+/obj/effect/decal/warning_stripes{
+	icon_state = "warning";
+	dir = 8
 	},
-/obj/structure/cable{
-	icon_state = "0-4";
-	d2 = 4
-	},
-/obj/structure/cable{
-	d1 = 4;
-	d2 = 8;
-	icon_state = "4-8";
-	pixel_y = 0
-	},
-/turf/simulated/floor/plating,
-/area/engineering/engine_singularity)
-"rsm" = (
 /obj/structure/cable{
 	d1 = 1;
 	d2 = 8;
 	icon_state = "1-8"
 	},
-/turf/simulated/floor/plating,
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2"
+	},
+/turf/simulated/floor,
 /area/engineering/engine_singularity)
 "rsz" = (
 /obj/structure/window/reinforced{
@@ -112289,13 +112282,6 @@
 	d1 = 1;
 	d2 = 4;
 	icon_state = "1-4"
-	},
-/turf/simulated/floor/plating,
-/area/engineering/engine_singularity)
-"sbX" = (
-/obj/machinery/door/airlock/external{
-	req_access_txt = "10;13";
-	req_one_access_txt = "10;13"
 	},
 /turf/simulated/floor/plating,
 /area/engineering/engine_singularity)
@@ -112978,11 +112964,6 @@
 /turf/simulated/floor/engine,
 /area/engineering/supermatter_room)
 "uJm" = (
-/obj/structure/cable{
-	d1 = 1;
-	d2 = 2;
-	icon_state = "1-2"
-	},
 /obj/machinery/camera/emp_proof{
 	dir = 8;
 	name = "Singularity South-East";
@@ -113471,6 +113452,11 @@
 /obj/effect/decal/warning_stripes{
 	icon_state = "warning_corner";
 	dir = 1
+	},
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2"
 	},
 /turf/simulated/floor,
 /area/engineering/engine_singularity)
@@ -231999,9 +231985,9 @@ cDk
 cDk
 czi
 cDk
-cwg
+cAC
 uJm
-rsm
+coL
 cEn
 cEn
 aaf
@@ -232501,9 +232487,9 @@ cuq
 cxd
 cAC
 cAC
-coL
+cAC
 cEn
-sbX
+kEa
 cxp
 cxp
 cxp
@@ -233505,9 +233491,9 @@ fNI
 cAv
 jPL
 jPL
-roI
+jPL
 cEn
-sbX
+kEa
 cxp
 oYR
 tGM
@@ -234007,9 +233993,9 @@ weW
 cEn
 pnH
 ybf
-vaE
+roI
 vXc
-cvW
+cyD
 cxp
 nCd
 tGM
