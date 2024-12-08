@@ -1156,7 +1156,11 @@
 				reminder++
 				to_chat(new_character, "<span class='notice'>The cloning pod about to create you is currently occupied. Please sit tight, and we will spawn you in a moment.</span>")
 	if(!new_character)
-		//The applicant left or something
+		log_admin("Divergent Clone ruleset failed to spawn a clone due to the applicant leaving.")
+		message_admins("Divergent Clone ruleset failed to spawn a clone due to the applicant leaving.")
+		mode.refund_midround_threat(cost)
+		mode.threat_log += "[worldtime2text()]: Rule [name] refunded [cost] (applicant left while waiting)"
+		mode.executed_rules -= src
 		return
 	
 	var/mob/clone = generate_ruleset_body(new_character)
@@ -1164,6 +1168,9 @@
 		to_chat(new_character, "<span class='warning'>Unfortunately the cloning pod failed to create you, and your second chance is cancelled. We apologize for the inconvenience.</span>")
 		log_admin("Divergent Clone ruleset failed to start producing a clone in the pod.")
 		message_admins("Divergent Clone ruleset failed to start producing a clone in the pod.")
+		mode.refund_midround_threat(cost)
+		mode.threat_log += "[worldtime2text()]: Rule [name] refunded [cost] (failed to generate body)"
+		mode.executed_rules -= src
 		return
 	new_character = clone
 	var/datum/role/new_role = new role_category
