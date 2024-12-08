@@ -184,17 +184,22 @@
 //Start growing a human clone in the pod!
 /obj/machinery/cloning/clonepod/proc/growclone(var/datum/dna2/record/R, var/clone_bodiless_observers = FALSE)
 	if(mess || working)
+		message_admins("Cloning pod is busy.")
 		return FALSE
 	var/datum/mind/clonemind = locate(R.mind)
 	if(!clonemind) //no mind
+		message_admins("No mind found for cloning.")
 		return FALSE
 	if(!istype(clonemind,/datum/mind)) //not a mind
+		message_admins("Mind is not a mind.")
 		return FALSE
 	if(clonemind.current)
 		if(clonemind.current.stat != DEAD)	//mind is associated with a non-dead body
+			message_admins("Mind is not dead.")
 			return FALSE
 	if(clonemind.active) //somebody is using that mind
 		if(ckey(clonemind.key)!=R.ckey )
+			message_admins("Mind is active.")
 			return FALSE
 	else
 		for(var/mob/G in player_list)
@@ -209,14 +214,18 @@
 					else if(clone_bodiless_observers && G && G.mind && (!G.mind.current || G.mind.current.stat == DEAD) && G.mind == clonemind)
 						break
 					else
+						message_admins("Observer is not allowed to clone.")
 						return FALSE
 				else if(G)
 					if(!G.mind)
+						message_admins("Mind is not a mind 2.")
 						return FALSE
 					if(G.mind.current)
 						if(G.mind.current.stat != DEAD)
+							message_admins("Mind is not dead 2.")
 							return FALSE
 					if(G.mind != clonemind)
+						message_admins("Mind is not the same.")
 						return FALSE
 
 	heal_level = upgraded ? 100 : rand(10,40) //Randomizes what health the clone is when ejected
