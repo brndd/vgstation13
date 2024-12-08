@@ -1147,7 +1147,7 @@
 		while(new_character && (target_pod.mess || target_pod.working))
 			sleep(2 SECONDS)
 			timeout += 2 SECONDS
-			if(timeout > 4 MINUTES) //4 minutes should be enough; cloning should take at most about 3 minutes normally.
+			if(timeout > 1 MINUTES) //4 minutes should be enough; cloning should take at most about 3 minutes normally.
 				break
 			else if(timeout > reminder MINUTES)
 				reminder++
