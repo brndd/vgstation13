@@ -183,7 +183,7 @@
 
 //Start growing a human clone in the pod!
 //TODO: remove debug prints
-/obj/machinery/cloning/clonepod/proc/growclone(var/datum/dna2/record/R, var/clone_bodiless_observers = FALSE)
+/obj/machinery/cloning/clonepod/proc/growclone(var/datum/dna2/record/R, var/force_clone = FALSE)
 	if(mess || working)
 		message_admins("Cloning pod is busy.")
 		return FALSE
@@ -194,8 +194,8 @@
 	if(!istype(clonemind,/datum/mind)) //not a mind
 		message_admins("Mind is not a mind.")
 		return FALSE
-	if(clonemind.current)
-		if(clonemind.current.stat != DEAD && !isAdminGhost(clonemind.current))	//mind is associated with a non-dead body
+	if(!force_clone && clonemind.current)
+		if(clonemind.current.stat != DEAD)	//mind is associated with a non-dead body
 			message_admins("Mind is not dead.") //<- aghost problem here
 			return FALSE
 	if(clonemind.active) //somebody is using that mind
@@ -206,14 +206,12 @@
 		for(var/mob/G in player_list)
 			if(G.ckey == R.ckey)
 				if(isobserver(G))
-					if(G:can_reenter_corpse)
+					if(G:can_reenter_corpse || force_clone)
 						break
 					if((!G.mind.current) && G.mind.body_archive) //If the mind's body was destroyed and that mind has a body archive
 						var/datum/dna2/record/D = G.mind.body_archive.data["dna_records"] //Retrieve the DNA records from the mind's body archive
 						if((D.id == R.id) || D.ckey == R.ckey) //If the MD5 hash of the mind's real_name matches the record's real_name (stored as the id variable), or if the ckeys match
 							break //Proceed with cloning. This set of checks is to allow cloning players with completely destroyed bodies, that nevertheless had cloning data stored
-					else if(clone_bodiless_observers && G && G.mind && (!G.mind.current || G.mind.current.stat == DEAD) && G.mind == clonemind)
-						break
 					else
 						message_admins("Observer is not allowed to clone.")
 						return FALSE
