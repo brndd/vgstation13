@@ -1193,6 +1193,5 @@
 	R.times_cloned = original_dna_record.times_cloned
 	R.talkcount = original_dna_record.talkcount
 
-	applicant.ghostize() //cloning can fail otherwise
 	return target_pod.growclone(R, TRUE)
 
