@@ -1147,7 +1147,7 @@
 		while(new_character && (target_pod.mess || target_pod.working))
 			sleep(2 SECONDS)
 			timeout += 2 SECONDS
-			if(timeout > 1 MINUTES) //4 minutes should be enough; cloning should take at most about 3 minutes normally.
+			if(timeout > 4 MINUTES) //4 minutes should be enough; cloning should take at most about 3 minutes normally.
 				break
 			else if(timeout > reminder MINUTES)
 				reminder++
@@ -1171,7 +1171,7 @@
 			mode.refund_midround_threat(cost)
 			mode.threat_log += "[worldtime2text()]: Rule [name] refunded [cost] (cloning pod occupied and unable to be cleared)"
 			mode.executed_rules -= src
-		return
+			return
 	
 	var/mob/clone = generate_ruleset_body(new_character)
 	if(!clone)
