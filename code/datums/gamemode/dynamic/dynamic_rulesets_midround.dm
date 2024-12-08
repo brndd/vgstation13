@@ -1139,9 +1139,9 @@
 	
 
 /datum/dynamic_ruleset/midround/from_ghosts/divergentclone/finish_setup(mob/new_character, index)
-	to_chat(new_character, "<span class='notice'>You were selected to be a Divergent Clone!</span>")
+	to_chat(new_character, "<span class='notice'>You were selected to be a divergent clone!</span>")
 	if(target_pod.mess || target_pod.working)
-		to_chat(new_character, "<span class='notice'>The cloning pod about to create you is currently occupied. Please sit tight, and we will spawn you in a moment.</span>")
+		to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] about to create you is currently occupied. Please sit tight, and we will spawn you in a moment.</span>")
 		var/timeout = 0
 		var/reminder = 1
 		while(new_character && (target_pod.mess || target_pod.working))
@@ -1154,7 +1154,7 @@
 				return
 			else if(timeout > reminder MINUTES)
 				reminder++
-				to_chat(new_character, "<span class='notice'>The cloning pod about to create you is currently occupied. Please sit tight, and we will spawn you in a moment.</span>")
+				to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] about to create you is currently occupied. Please sit tight, and we will spawn you in a moment.</span>")
 	if(!new_character)
 		log_admin("Divergent Clone ruleset failed to spawn a clone due to the applicant leaving.")
 		message_admins("Divergent Clone ruleset failed to spawn a clone due to the applicant leaving.")
