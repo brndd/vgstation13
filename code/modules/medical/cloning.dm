@@ -195,7 +195,7 @@
 		return FALSE
 	if(clonemind.current)
 		if(clonemind.current.stat != DEAD)	//mind is associated with a non-dead body
-			message_admins("Mind is not dead.")
+			message_admins("Mind is not dead.") //<- aghost problem here
 			return FALSE
 	if(clonemind.active) //somebody is using that mind
 		if(ckey(clonemind.key)!=R.ckey )
@@ -483,7 +483,7 @@
 	domutcheck(occupant) //Waiting until they're out before possible monkeyizing.
 	occupant = null
 	if(biomass > 0)
-		biomass -= CLONE_BIOMASS/resource_efficiency //Improve parts to use less biomass
+		biomass = max(0, biomass - CLONE_BIOMASS/resource_efficiency) //Improve parts to use less biomass
 	else
 		biomass = 0
 
