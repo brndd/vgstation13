@@ -1123,11 +1123,11 @@
 		return 0
 	
 	var/list/clonepods = list()
-	for(var/obj/machinery/cloning/clonepod in machines)
+	for(var/obj/machinery/cloning/clonepod/pod in machines)
 		//Check that the pod has cloned something before
 		//We don't check if the pod is occupied or full of mess, because we'll just wait for this to not be the case once we're spawning.
-		if(clonepod.cloned_records.len > 0)
-			clonepods += clonepod
+		if(pod.cloned_records.len > 0)
+			clonepods += pod
 	if(clonepods.len == 0)
 		//TODO: remove these messages after debugging is done
 		log_admin("Cannot accept Divergent Clone ruleset, no cloning pods with produced clones found.")
