@@ -11,7 +11,7 @@
     special_role = DIVERGENTCLONE
     logo_state = "divergentclone-logo"
     wikiroute = DIVERGENTCLONE
-    default_admin_voice = "The Voices in Your Head"
+    default_admin_voice = "The Ancient Reptilian Brain"
     admin_voice_style = "bold"
 
 
