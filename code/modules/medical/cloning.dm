@@ -195,7 +195,7 @@
 		message_admins("Mind is not a mind.")
 		return FALSE
 	if(clonemind.current)
-		if(clonemind.current.stat != DEAD)	//mind is associated with a non-dead body
+		if(clonemind.current.stat != DEAD && !isAdminGhost(clonemind.current))	//mind is associated with a non-dead body
 			message_admins("Mind is not dead.") //<- aghost problem here
 			return FALSE
 	if(clonemind.active) //somebody is using that mind
