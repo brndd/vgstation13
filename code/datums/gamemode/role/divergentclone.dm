@@ -17,8 +17,8 @@
 
 /datum/role/divergentclone/Greet()
     to_chat(antag.current, "<b><span class='warning'>You are a divergent clone!</span></b>")
-    to_chat(antag.current, "<span class='warning'>The cloning machine has malfunctioned and created a divergent copy of you.</span>")
-    to_chat(antag.current, "<span class='warning'>You must prove that you are the original by any means necessary.</span>")
+    to_chat(antag.current, "<span class='warning'>The cloning machine has malfunctioned in a freak accident and created a divergent copy of you!</span>")
+    to_chat(antag.current, "<span class='warning'>You must prove the world that you are the original, or at the very least that you deserve to exist.</span>")
 
 /datum/role/divergentclone/ForgeObjectives()
     AppendObjective(/datum/objective/survive)
