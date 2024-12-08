@@ -1148,19 +1148,29 @@
 			sleep(2 SECONDS)
 			timeout += 2 SECONDS
 			if(timeout > 4 MINUTES) //4 minutes should be enough; cloning should take at most about 3 minutes normally.
-				to_chat(new_character, "<span class='warning'>Unfortunately the cloning pod failed to create you, and your second chance is cancelled. We apologize for the inconvenience.</span>")
-				log_admin("Divergent Clone ruleset failed to spawn a clone due to a cloning pod being occupied for four minutes.")
-				message_admins("Divergent Clone ruleset failed to spawn a clone due to a cloning pod being occupied for four minutes.")
-				return
+				break
 			else if(timeout > reminder MINUTES)
 				reminder++
 				to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] about to create you is currently occupied. Please sit tight, and we will spawn you in a moment.</span>")
+	
 	if(!new_character)
 		log_admin("Divergent Clone ruleset failed to spawn a clone due to the applicant leaving.")
 		message_admins("Divergent Clone ruleset failed to spawn a clone due to the applicant leaving.")
 		mode.refund_midround_threat(cost)
 		mode.threat_log += "[worldtime2text()]: Rule [name] refunded [cost] (applicant left while waiting)"
 		mode.executed_rules -= src
+		return
+
+	//if the pod is STILL occupied, just forcibly eject who or whatever is inside
+	if(target_pod.mess || target_pod.working)
+		target_pod.locked = FALSE
+		target_pod.go_out()
+		if(target_pod.mess || target_pod.working)
+			log_admin("Divergent Clone ruleset failed to spawn a clone due to the cloning pod being occupied and unable to be cleared.")
+			message_admins("Divergent Clone ruleset failed to spawn a clone due to the cloning pod being occupied and unable to be cleared.")
+			mode.refund_midround_threat(cost)
+			mode.threat_log += "[worldtime2text()]: Rule [name] refunded [cost] (cloning pod occupied and unable to be cleared)"
+			mode.executed_rules -= src
 		return
 	
 	var/mob/clone = generate_ruleset_body(new_character)
