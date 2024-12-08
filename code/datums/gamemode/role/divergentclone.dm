@@ -21,5 +21,5 @@
     to_chat(antag.current, "<span class='warning'>You must prove the world that you are the original, or at the very least that you deserve to exist.</span>")
 
 /datum/role/divergentclone/ForgeObjectives()
-    AppendObjective(/datum/objective/survive)
-    //TODO: jectie for having the correct ID card?
+    AppendObjective(/datum/objective/freeform/prove_identity)
+    AppendObjective(/datum/objective/acquire_personal_id)
