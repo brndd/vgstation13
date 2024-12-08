@@ -1095,3 +1095,93 @@
 	requirements = list(10,10,10,10,10,10,10,10,10,10)
 	logo = "gun-logo"
 	repeatable = TRUE
+
+//////////////////////////////////////////////
+//                                          //
+//       DIVERGENT CLONE                    //
+//                                          //
+//////////////////////////////////////////////
+
+/datum/dynamic_ruleset/midround/from_ghosts/divergentclone
+	name = "Divergent Clone"
+	role_category = /datum/role/divergentclone
+	required_pop = list(4, 4, 4, 4, 4, 4, 4, 4, 4, 4)
+	required_candidates = 1
+	weight = BASE_RULESET_WEIGHT
+	weight_category = "Clone"
+	cost = 10
+	requirements = list(40,30,20,10,10,10,10,10,10,10)
+	high_population_requirement = 10
+	logo = "clone-logo"
+	repeatable = TRUE
+	makeBody = FALSE
+	var/obj/machinery/cloning/clonepod/target_pod = null
+	var/datum/dna2/record/original_dna_record = null //unmodified original's DNA record. Make sure to swap the ckey etc. out once spawning.
+
+/datum/dynamic_ruleset/midround/from_ghosts/divergentclone/ready(var/forced = 0)
+	if(!config.revival_cloning)
+		return 0
+	
+	var/list/clonepods = list()
+	for(var/obj/machinery/cloning/clonepod in machines)
+		//Check that the pod has cloned something before
+		//We don't check if the pod is occupied or full of mess, because we'll just wait for this to not be the case once we're spawning.
+		if(clonepod.cloned_records.len > 0)
+			clonepods += clonepod
+	if(clonepods.len == 0)
+		//TODO: remove these messages after debugging is done
+		log_admin("Cannot accept Divergent Clone ruleset, no cloning pods with produced clones found.")
+		message_admins("Cannot accept Divergent Clone ruleset, no cloning pods with produced clones found.")
+		return 0
+	target_pod = pick(clonepods)
+	original_dna_record = pick(target_pod.cloned_records)
+	return ..()
+	
+
+/datum/dynamic_ruleset/midround/from_ghosts/divergentclone/finish_setup(mob/new_character, index)
+	if(target_pod.mess || target_pod.working)
+		to_chat(new_character, "<span class='notice'>The cloning pod about to create you is currently occupied. Please sit tight, and we will spawn you in a moment.</span>")
+		var/timeout = 0
+		while(new_character && (target_pod.mess || target_pod.working))
+			sleep(2 SECONDS)
+			timeout += 2 SECONDS
+			if(timeout > 4 MINUTES) //4 minutes should be enough; cloning should take at most about 3 minutes normally.
+				to_chat(new_character, "<span class='warning'>Unfortunately the cloning pod failed to create you, and your second chance is cancelled. We apologize for the inconvenience.</span>")
+				log_admin("Divergent Clone ruleset failed to spawn a clone due to a cloning pod being occupied for four minutes.")
+				message_admins("Divergent Clone ruleset failed to spawn a clone due to a cloning pod being occupied for four minutes.")
+				return
+			else if(timeout > 2 MINUTES)
+				to_chat(new_character, "<span class='notice'>The cloning pod about to create you is currently occupied. Please sit tight, and we will spawn you in a moment.</span>")
+	if(!new_character)
+		//The applicant left or something
+		return
+	
+	var/mob/clone = generate_ruleset_body(new_character)
+	if(!clone)
+		to_chat(new_character, "<span class='warning'>Unfortunately the cloning pod failed to create you, and your second chance is cancelled. We apologize for the inconvenience.</span>")
+		log_admin("Divergent Clone ruleset failed to start producing a clone in the pod.")
+		message_admins("Divergent Clone ruleset failed to start producing a clone in the pod.")
+		return
+	new_character = clone
+	var/datum/role/new_role = new role_category
+	new_role.AssignToRole(new_character.mind,1)
+	setup_role(new_role)
+
+
+//By the time this is called, the target pod should be free and ready to clone.
+/datum/dynamic_ruleset/midround/from_ghosts/divergentclone/generate_ruleset_body(var/mob/applicant)
+	var/datum/dna2/record/R = new /datum/dna2/record()
+	R.dna = original_dna_record.dna.Clone()
+	R.ckey = applicant.ckey
+	R.mind = "\ref[applicant.mind]"
+	R.id = copytext(md5(R.dna.real_name), 2, 6)
+	R.name = R.dna.real_name
+	R.types = DNA2_BUF_UI | DNA2_BUF_UE | DNA2_BUF_SE
+	R.languages = original_dna_record.languages.Copy()
+	R.attack_log = original_dna_record.attack_log.Copy()
+	R.default_language = original_dna_record.default_language
+	R.times_cloned = original_dna_record.times_cloned
+	R.talkcount = original_dna_record.talkcount
+
+	return target_pod.growclone(R, TRUE)
+
