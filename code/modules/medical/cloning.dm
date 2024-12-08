@@ -182,6 +182,7 @@
 //Clonepod
 
 //Start growing a human clone in the pod!
+//TODO: remove debug prints
 /obj/machinery/cloning/clonepod/proc/growclone(var/datum/dna2/record/R, var/clone_bodiless_observers = FALSE)
 	if(mess || working)
 		message_admins("Cloning pod is busy.")
