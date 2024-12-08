@@ -293,7 +293,7 @@
 		H.mind.suiciding = FALSE
 	H.update_name()
 
-	cloned_records += R
+	cloned_records += R.Clone()
 	return H
 
 //Grow clones to maturity then kick them out.  FREELOADERS
