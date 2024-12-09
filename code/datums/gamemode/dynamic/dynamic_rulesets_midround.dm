@@ -1193,9 +1193,13 @@
 	//We create a temporary dummy mob because this creates a new mind for the applicant.
 	var/mob/living/carbon/human/H = new()
 	H.key = applicant.key
+	var/datum/mind/new_mind = H.mind
 	var/datum/mind/original_mind = locate(original_dna_record.mind)
-	H.mind.name = original_mind.name
-	H.mind.memory = original_mind.memory
+	new_mind.name = original_mind.name
+	new_mind.memory = original_mind.memory
+	new_mind.assigned_role = original_mind.assigned_role
+	new_mind.body_archive = original_mind.body_archive
+	new_mind.role_alt_title = original_mind.role_alt_title
 
 	var/datum/dna2/record/R = new /datum/dna2/record()
 	R.dna = original_dna_record.dna.Clone()
