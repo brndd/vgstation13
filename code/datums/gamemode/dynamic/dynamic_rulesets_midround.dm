@@ -1140,18 +1140,21 @@
 
 /datum/dynamic_ruleset/midround/from_ghosts/divergentclone/finish_setup(mob/new_character, index)
 	to_chat(new_character, "<span class='notice'>You were selected to be a divergent clone!</span>")
+	var/mob/living/occupant = null
 	if(target_pod.mess || target_pod.working)
-		to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] about to create you is currently occupied. Please sit tight, and we will spawn you in a moment.</span>")
+		to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently occupied. You will spawn in as a clone of whoever is inside when they exit. Get ready!</span>")
+		if(target_pod.occupant)
+			occupant = target_pod.occupant
 		var/timeout = 0
 		var/reminder = 1
 		while(new_character && (target_pod.mess || target_pod.working))
-			sleep(2 SECONDS)
-			timeout += 2 SECONDS
 			if(timeout > 4 MINUTES) //4 minutes should be enough; cloning should take at most about 3 minutes normally.
 				break
 			else if(timeout > reminder MINUTES)
 				reminder++
-				to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] about to create you is currently occupied. Please sit tight, and we will spawn you in a moment.</span>")
+				to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently occupied. You will spawn in as a clone of whoever is inside when they exit. Get ready!</span>")
+			sleep(1 SECONDS)
+			timeout += 1 SECONDS
 	
 	if(!new_character)
 		log_admin("Divergent Clone ruleset failed to spawn a clone due to the applicant leaving.")
@@ -1163,6 +1166,8 @@
 
 	//if the pod is STILL occupied, just forcibly eject who or whatever is inside
 	if(target_pod.mess || target_pod.working)
+		if(target_pod.occupant)
+			occupant = target_pod.occupant
 		target_pod.locked = FALSE
 		target_pod.go_out()
 		if(target_pod.mess || target_pod.working)
@@ -1173,7 +1178,11 @@
 			mode.executed_rules -= src
 			return
 	
-	var/mob/clone = generate_ruleset_body(new_character)
+	if(occupant == null)
+		var/mob/clone = generate_body_in_cloner(new_character)
+	else
+		var/mob/clone = generate_body_outside_cloner(new_character, occupant)
+	
 	if(!clone)
 		to_chat(new_character, "<span class='warning'>Unfortunately the cloning pod failed to create you, and your second chance is cancelled. We apologize for the inconvenience.</span>")
 		log_admin("Divergent Clone ruleset failed to start producing a clone in the pod.")
@@ -1189,10 +1198,10 @@
 
 
 //By the time this is called, the target pod should be free and ready to clone.
-/datum/dynamic_ruleset/midround/from_ghosts/divergentclone/generate_ruleset_body(var/mob/applicant)
+/datum/dynamic_ruleset/midround/from_ghosts/divergentclone/proc/generate_body_in_cloner(var/mob/applicant)
 	//We create a temporary dummy mob because this creates a new mind for the applicant.
 	var/mob/living/carbon/human/H = new(pick(latejoin))
-	H.key = applicant.key
+	H.ckey = applicant.ckey
 	var/datum/mind/new_mind = H.mind
 	var/datum/mind/original_mind = locate(original_dna_record.mind)
 	new_mind.name = original_mind.name
@@ -1200,6 +1209,7 @@
 	new_mind.assigned_role = original_mind.assigned_role
 	new_mind.body_archive = original_mind.body_archive
 	new_mind.role_alt_title = original_mind.role_alt_title
+	new_mind.miming = original_mind.miming
 	applicant = H.ghostize(FALSE)
 
 	var/datum/dna2/record/R = new /datum/dna2/record()
@@ -1219,3 +1229,63 @@
 	QDEL_NULL(H)
 	return new_clone
 
+//Creates a fresh body skipping the cloner entirely (for when we want to do a simultaneous twin cloning)
+//this is some ugly repetition and copypaste from the cloner code but w/e
+/datum/dynamic_ruleset/midround/from_ghosts/divergentclone/proc/generate_body_outside_cloner(var/mob/applicant, var/mob/living/occupant)
+	var/mob/living/carbon/human/H = new(get_turf(target_pod), original_dna_record.dna.species, delay_ready_dna = TRUE)
+	H.ckey = applicant.ckey
+	var/datum/mind/new_mind = H.mind
+	var/datum/mind/original_mind = locate(original_dna_record.mind)
+	new_mind.name = original_mind.name
+	new_mind.memory = original_mind.memory
+	new_mind.assigned_role = original_mind.assigned_role
+	new_mind.body_archive = original_mind.body_archive
+	new_mind.role_alt_title = original_mind.role_alt_title
+	new_mind.miming = original_mind.miming
+
+	H.times_cloned = original_dna_record.times_cloned + 1
+	H.talkcount = original_dna_record.talkcount
+	
+	if(isplasmaman(H))
+		H.fire_sprite = "Plasmaman"
+	
+	H.dna = original_dna_record.dna.Clone()
+	H.dna.flavor_text = original_dna_record.dna.flavor_text
+	H.dna.species = original_dna_record.dna.species
+	if(H.dna.species != "Human")
+		H.set_species(H.dna.species, TRUE)
+	
+	H.adjustToxLoss(occupant.getToxLoss())
+	H.adjustCloneLoss(occupant.getCloneLoss())
+	H.adjustOxyLoss(occupant.getOxyLoss())
+	H.adjustBrainLoss(occupant.getBrainLoss())
+	H.Paralyse(occupant.paralysis)
+	H.stat = occupant.stat
+	H.updatehealth()
+
+	if (H.mind.miming)
+		H.add_spell(new /spell/aoe_turf/conjure/forcewall/mime, "grey_spell_ready")
+		if (H.mind.miming == MIMING_OUT_OF_CHOICE)
+			H.add_spell(new /spell/targeted/oathbreak/)
+	
+	H.UpdateAppearance()
+	H.set_species(H.dna.species)
+
+	if(!target_pod.upgraded)
+		randmutb(H)
+	H.dna.mutantrace = original_dna_record.dna.mutantrace
+	H.update_mutantrace()
+
+	for(var/datum/language/L in original_dna_record.languages)
+		H.add_language(L.name)
+		if (L == original_dna_record.default_language)
+			H.default_language = original_dna_record.default_language
+	H.attack_log = original_dna_record.attack_log.Copy()
+	H.real_name = H.dna.real_name
+	H.flavor_text = H.dna.flavor_text
+
+	if(H.mind)
+		H.mind.suiciding = FALSE
+	H.update_name()
+
+	return H
