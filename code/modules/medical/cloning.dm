@@ -198,7 +198,7 @@
 		if(clonemind.current.stat != DEAD)	//mind is associated with a non-dead body
 			message_admins("Mind is not dead.") //<- aghost problem here
 			return FALSE
-	if(clonemind.active) //somebody is using that mind
+	if(!force_clone && clonemind.active) //somebody is using that mind
 		if(ckey(clonemind.key)!=R.ckey )
 			message_admins("Mind is active.")
 			return FALSE
