@@ -1110,7 +1110,7 @@
 	weight = BASE_RULESET_WEIGHT
 	weight_category = "Clone"
 	cost = 10
-	requirements = list(40,30,20,10,10,10,10,10,10,10)
+	requirements = list(20,20,15,10,10,10,10,10,10,10)
 	high_population_requirement = 10
 	logo = "divergentclone-logo"
 	repeatable = TRUE
