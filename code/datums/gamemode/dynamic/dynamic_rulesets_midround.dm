@@ -1201,7 +1201,6 @@
 	new_mind.body_archive = original_mind.body_archive
 	new_mind.role_alt_title = original_mind.role_alt_title
 	H.ghostize(FALSE)
-	QDEL_NULL(H)
 
 	var/datum/dna2/record/R = new /datum/dna2/record()
 	R.dna = original_dna_record.dna.Clone()
@@ -1216,5 +1215,7 @@
 	R.times_cloned = original_dna_record.times_cloned
 	R.talkcount = original_dna_record.talkcount
 
-	return target_pod.growclone(R, TRUE)
+	var/mob/living/carbon/human/new_clone = target_pod.growclone(R, TRUE)
+	QDEL_NULL(H)
+	return new_clone
 
