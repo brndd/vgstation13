@@ -1139,9 +1139,11 @@
 	to_chat(new_character, "<span class='notice'>You were selected to be a divergent clone!</span>")
 	var/mob/living/occupant = null
 	if(target_pod.mess || target_pod.working)
-		to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently occupied. You will spawn in as a clone of whoever is inside when they exit. Get ready!</span>")
 		if(target_pod.occupant)
+			to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently occupied. You will spawn in as a clone of whoever is inside when they exit. Get ready!</span>")
 			occupant = target_pod.occupant
+		else
+			to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently busy. Please stand by. You will be spawned in in a moment.</span>")
 		var/timeout = 0
 		var/reminder = 1
 		while(new_character && (target_pod.mess || target_pod.working))
@@ -1149,7 +1151,10 @@
 				break
 			else if(timeout > reminder MINUTES)
 				reminder++
-				to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently occupied. You will spawn in as a clone of whoever is inside when they exit. Get ready!</span>")
+				if(target_pod.occupant)
+					to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently occupied. You will spawn in as a clone of whoever is inside when they exit. Get ready!</span>")
+				else
+					to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently busy. Please stand by. You will be spawned in in a moment.</span>")
 			sleep(1 SECONDS)
 			timeout += 1 SECONDS
 	
