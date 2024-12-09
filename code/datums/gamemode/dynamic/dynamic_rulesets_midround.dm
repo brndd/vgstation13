@@ -1191,7 +1191,7 @@
 //By the time this is called, the target pod should be free and ready to clone.
 /datum/dynamic_ruleset/midround/from_ghosts/divergentclone/generate_ruleset_body(var/mob/applicant)
 	//We create a temporary dummy mob because this creates a new mind for the applicant.
-	var/mob/living/carbon/human/H = new()
+	var/mob/living/carbon/human/H = new(pick(latejoin))
 	H.key = applicant.key
 	var/datum/mind/new_mind = H.mind
 	var/datum/mind/original_mind = locate(original_dna_record.mind)
