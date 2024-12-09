@@ -20,11 +20,16 @@
         return FALSE
     
     for(var/obj/O in get_contents_in_object(owner.current))
+        var/obj/item/weapon/card/id/I
         if(istype(O, /obj/item/weapon/card/id))
-            var/obj/item/weapon/card/id/I = O
-            var/datum/dna/D = owner.current.dna
-            if(I.dna_hash == D.unique_enzymes && I.fingerprint_hash == md5(D.uni_identity))
-                return TRUE
+            I = O
+        else if(istype(O, /obj/item/device/pda))
+            var/obj/item/device/pda/P = O
+            I = P.id
+        var/datum/dna/D = owner.current.dna
+        if(I.dna_hash == D.unique_enzymes && I.fingerprint_hash == md5(D.uni_identity))
+            return TRUE
+            
     return FALSE
         
 
