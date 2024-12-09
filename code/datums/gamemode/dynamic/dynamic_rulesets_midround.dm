@@ -1112,7 +1112,7 @@
 	cost = 10
 	requirements = list(40,30,20,10,10,10,10,10,10,10)
 	high_population_requirement = 10
-	logo = "clone-logo"
+	logo = "divergentclone-logo"
 	repeatable = TRUE
 	makeBody = FALSE
 	var/obj/machinery/cloning/clonepod/target_pod = null
