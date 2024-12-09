@@ -28,6 +28,7 @@
 	id_tag = "clone_pod"
 	var/upgraded = 0 //if fully upgraded with T4 components, it will drastically improve and allow for some stuff
 	var/obj/machinery/computer/cloning/cloning_computer = null
+	var/list/cloned_records = list() //List of all records this pod has cloned.
 
 
 	machine_flags = EMAGGABLE | SCREWTOGGLE | CROWDESTROY | MULTITOOL_MENU | MULTIOUTPUT
@@ -181,7 +182,8 @@
 //Clonepod
 
 //Start growing a human clone in the pod!
-/obj/machinery/cloning/clonepod/proc/growclone(var/datum/dna2/record/R)
+//force_clone forcibly clones a ghost even if they aren't in their body (used only by midround divergent clones)
+/obj/machinery/cloning/clonepod/proc/growclone(var/datum/dna2/record/R, var/force_clone = FALSE)
 	if(mess || working)
 		return FALSE
 	var/datum/mind/clonemind = locate(R.mind)
@@ -189,17 +191,17 @@
 		return FALSE
 	if(!istype(clonemind,/datum/mind)) //not a mind
 		return FALSE
-	if(clonemind.current)
+	if(!force_clone && clonemind.current)
 		if(clonemind.current.stat != DEAD)	//mind is associated with a non-dead body
 			return FALSE
-	if(clonemind.active) //somebody is using that mind
+	if(!force_clone && clonemind.active) //somebody is using that mind
 		if(ckey(clonemind.key)!=R.ckey )
 			return FALSE
 	else
 		for(var/mob/G in player_list)
 			if(G.ckey == R.ckey)
 				if(isobserver(G))
-					if(G:can_reenter_corpse)
+					if(G:can_reenter_corpse || force_clone)
 						break
 					if((!G.mind.current) && G.mind.body_archive) //If the mind's body was destroyed and that mind has a body archive
 						var/datum/dna2/record/D = G.mind.body_archive.data["dna_records"] //Retrieve the DNA records from the mind's body archive
@@ -289,7 +291,9 @@
 	if(H.mind)
 		H.mind.suiciding = FALSE
 	H.update_name()
-	return TRUE
+
+	cloned_records += R.Clone()
+	return H
 
 //Grow clones to maturity then kick them out.  FREELOADERS
 /obj/machinery/cloning/clonepod/process()
@@ -469,7 +473,7 @@
 	domutcheck(occupant) //Waiting until they're out before possible monkeyizing.
 	occupant = null
 	if(biomass > 0)
-		biomass -= CLONE_BIOMASS/resource_efficiency //Improve parts to use less biomass
+		biomass = max(0, biomass - CLONE_BIOMASS/resource_efficiency) //Improve parts to use less biomass
 	else
 		biomass = 0
 
