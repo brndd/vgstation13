@@ -1138,7 +1138,7 @@
 /datum/dynamic_ruleset/midround/from_ghosts/divergentclone/finish_setup(mob/new_character, index)
 	to_chat(new_character, "<span class='notice'>You were selected to be a divergent clone!</span>")
 	var/mob/living/occupant = null
-	if(target_pod.mess || target_pod.working)
+	if(target_pod.working)
 		if(target_pod.occupant)
 			to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently occupied. You will spawn in as a clone of whoever is inside when they exit. Get ready!</span>")
 			occupant = target_pod.occupant
@@ -1146,7 +1146,7 @@
 			to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently busy. Please stand by. You will be spawned in in a moment.</span>")
 		var/timeout = 0
 		var/reminder = 1
-		while(new_character && (target_pod.mess || target_pod.working))
+		while(new_character && (target_pod.working))
 			if(timeout > 4 MINUTES) //4 minutes should be enough; cloning should take at most about 3 minutes normally.
 				break
 			else if(timeout > reminder MINUTES)
