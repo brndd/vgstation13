@@ -26,6 +26,8 @@
         else if(istype(O, /obj/item/device/pda))
             var/obj/item/device/pda/P = O
             I = P.id
+        else
+            continue
         var/datum/dna/D = owner.current.dna
         message_admins("dna_hash: [I.dna_hash] unique_enzymes: [D.unique_enzymes] fingerprint_hash: [I.fingerprint_hash] md5: [md5(D.uni_identity)]")
         if(I.dna_hash == D.unique_enzymes && I.fingerprint_hash == md5(D.uni_identity))
