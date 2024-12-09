@@ -1,8 +1,8 @@
 /datum/objective/freeform/prove_identity
-    explanation_text = "Convince the world that you are the prime version of <person>."
+    explanation_text = "Convince the world that you are the real <person>, or at least as real as the other copy."
 
 /datum/objective/freeform/prove_identity/format_explanation()
-    return "Convince the world that you are the prime version of [owner.name]."
+    return "Convince the world that you are the real [owner.name], or at least as real as the other copy."
 
 /datum/objective/freeform/prove_identity/PostAppend()
     explanation_text = format_explanation()
