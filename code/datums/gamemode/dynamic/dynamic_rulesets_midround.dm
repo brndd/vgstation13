@@ -1183,6 +1183,7 @@
 		clone = generate_body_in_cloner(new_character)
 	else
 		clone = generate_body_outside_cloner(new_character, occupant)
+		target_pod.visible_message("<span class='warning'>\The [target_pod.name] ejects an unexpected extra clone!</span>")
 	
 	if(!clone)
 		to_chat(new_character, "<span class='warning'>Unfortunately the cloning pod failed to create you, and your second chance is cancelled. We apologize for the inconvenience.</span>")
