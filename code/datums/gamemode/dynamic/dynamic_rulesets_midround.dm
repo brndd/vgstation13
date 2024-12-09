@@ -1200,7 +1200,7 @@
 	new_mind.assigned_role = original_mind.assigned_role
 	new_mind.body_archive = original_mind.body_archive
 	new_mind.role_alt_title = original_mind.role_alt_title
-	H.ghostize()
+	H.ghostize(FALSE)
 	QDEL_NULL(H)
 
 	var/datum/dna2/record/R = new /datum/dna2/record()
