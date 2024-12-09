@@ -4,6 +4,10 @@
 /datum/objective/freeform/prove_identity/format_explanation()
     return "Convince the world that you are the prime version of [owner.name]."
 
+/datum/objective/freeform/prove_identity/PostAppend()
+    explanation_text = format_explanation()
+    return TRUE
+
 /datum/objective/acquire_personal_id
     explanation_text = "Acquire an ID card matching your identity and DNA."
     name = "Acquire personal ID card"
