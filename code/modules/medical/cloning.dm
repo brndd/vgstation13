@@ -185,22 +185,17 @@
 //TODO: remove debug prints
 /obj/machinery/cloning/clonepod/proc/growclone(var/datum/dna2/record/R, var/force_clone = FALSE)
 	if(mess || working)
-		message_admins("Cloning pod is busy.")
 		return FALSE
 	var/datum/mind/clonemind = locate(R.mind)
 	if(!clonemind) //no mind
-		message_admins("No mind found for cloning.")
 		return FALSE
 	if(!istype(clonemind,/datum/mind)) //not a mind
-		message_admins("Mind is not a mind.")
 		return FALSE
 	if(!force_clone && clonemind.current)
 		if(clonemind.current.stat != DEAD)	//mind is associated with a non-dead body
-			message_admins("Mind is not dead.") //<- aghost problem here
 			return FALSE
 	if(!force_clone && clonemind.active) //somebody is using that mind
 		if(ckey(clonemind.key)!=R.ckey )
-			message_admins("Mind is active.")
 			return FALSE
 	else
 		for(var/mob/G in player_list)
@@ -213,18 +208,14 @@
 						if((D.id == R.id) || D.ckey == R.ckey) //If the MD5 hash of the mind's real_name matches the record's real_name (stored as the id variable), or if the ckeys match
 							break //Proceed with cloning. This set of checks is to allow cloning players with completely destroyed bodies, that nevertheless had cloning data stored
 					else
-						message_admins("Observer is not allowed to clone.")
 						return FALSE
 				else if(G)
 					if(!G.mind)
-						message_admins("Mind is not a mind 2.")
 						return FALSE
 					if(G.mind.current)
 						if(G.mind.current.stat != DEAD)
-							message_admins("Mind is not dead 2.")
 							return FALSE
 					if(G.mind != clonemind)
-						message_admins("Mind is not the same.")
 						return FALSE
 
 	heal_level = upgraded ? 100 : rand(10,40) //Randomizes what health the clone is when ejected
