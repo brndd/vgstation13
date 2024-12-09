@@ -182,7 +182,7 @@
 //Clonepod
 
 //Start growing a human clone in the pod!
-//TODO: remove debug prints
+//force_clone forcibly clones a ghost even if they aren't in their body (used only by midround divergent clones)
 /obj/machinery/cloning/clonepod/proc/growclone(var/datum/dna2/record/R, var/force_clone = FALSE)
 	if(mess || working)
 		return FALSE
