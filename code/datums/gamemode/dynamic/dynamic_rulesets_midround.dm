@@ -1193,7 +1193,7 @@
 	//We create a temporary dummy mob because this creates a new mind for the applicant.
 	var/mob/living/carbon/human/H = new()
 	H.key = applicant.key
-	var/datum/mind/original_mind = original_dna_record.mind
+	var/datum/mind/original_mind = "\ref[original_dna_record.mind]"
 	H.mind.name = original_mind.name
 	H.mind.memory = original_mind.memory
 
