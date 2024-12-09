@@ -1129,9 +1129,6 @@
 		if(pod.cloned_records.len > 0)
 			clonepods += pod
 	if(clonepods.len == 0)
-		//TODO: remove these messages after debugging is done
-		log_admin("Cannot accept Divergent Clone ruleset, no cloning pods with produced clones found.")
-		message_admins("Cannot accept Divergent Clone ruleset, no cloning pods with produced clones found.")
 		return 0
 	target_pod = pick(clonepods)
 	original_dna_record = pick(target_pod.cloned_records)
