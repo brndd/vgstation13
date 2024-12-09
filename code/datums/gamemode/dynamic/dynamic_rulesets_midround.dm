@@ -1178,10 +1178,11 @@
 			mode.executed_rules -= src
 			return
 	
+	var/mob/clone = null
 	if(occupant == null)
-		var/mob/clone = generate_body_in_cloner(new_character)
+		clone = generate_body_in_cloner(new_character)
 	else
-		var/mob/clone = generate_body_outside_cloner(new_character, occupant)
+		clone = generate_body_outside_cloner(new_character, occupant)
 	
 	if(!clone)
 		to_chat(new_character, "<span class='warning'>Unfortunately the cloning pod failed to create you, and your second chance is cancelled. We apologize for the inconvenience.</span>")
