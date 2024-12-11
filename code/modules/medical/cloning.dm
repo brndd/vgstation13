@@ -381,7 +381,7 @@
 	H.nobreath = 15
 	H.stat = H.status_flags & BUDDHAMODE ? CONSCIOUS : UNCONSCIOUS //There was a bug which allowed you to talk for a few seconds after being cloned, because your stat wasn't updated until next Life() tick. This is a fix for this!
 
-	if(copy_progress_from && copy_progress_from in occupants)
+	if(copy_progress_from && (copy_progress_from in occupants))
 		var/mob/living/C = copy_progress_from
 		H.setToxLoss(C.getToxLoss())
 		H.setCloneLoss(C.getCloneLoss())

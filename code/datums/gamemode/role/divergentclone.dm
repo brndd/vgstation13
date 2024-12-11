@@ -118,7 +118,8 @@
     //Evil clones also get traitor objectives. New ones if the original is not a traitor, dupes of the original's objectives if they are.
     if(evil)
         if(original_mind.GetRole(TRAITOR))
-            var/datum/objective_holder/holder = original_mind.antag_roles[TRAITOR].objectives
+            var/datum/role/traitor/orig_role = original_mind.antag_roles[TRAITOR]
+            var/datum/objective_holder/holder = orig_role.objectives
             for(var/datum/objective/O in holder.GetObjectives())
                 AppendObjective(O)
 
