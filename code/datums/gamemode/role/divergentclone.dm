@@ -13,13 +13,380 @@
     wikiroute = DIVERGENTCLONE
     default_admin_voice = "The Ancient Reptilian Brain"
     admin_voice_style = "bold"
+    var/datum/mind/original_mind = null
+    var/extra_role_memory = ""
+    var/uplink_pw_revealed = FALSE
+    var/datum/component/uplink/uplink = null
+
+    //If the clone is evil, they get traitor objectives:
+    // - If the clone is evil but the original is not a traitor, they get NEW objectives
+    // - If the clone is evil and the original is also a traitor, they get the SAME objectives as the original
+    // amnesia controls how much the clone remembers of the original's traitor status:
+    // - 0: The clone remembers everything, including the original's traitor status, traitor objectives, and uplink password
+    // - 1: The clone remembers most things, but not e.g. the uplink password. What they remember depends on whether the clone is evil or not; evil clones do not remember their original's traitor status, normal ones do.
+    // - 2: The clone does not remember whether the original is a traitor, nor their uplink password.
+    var/evil = 0 //0: neutral clone, 1: traitor
+    var/amnesia = 0 //0: excellent memory, 1: normal memory, 2: hazy memory
+
+/datum/role/divergentclone/New(var/datum/mind/M, var/datum/faction/fac=null, var/new_id, var/override = FALSE, var/datum/mind/original_mind = null)
+    . = ..()
+    if(!original_mind)
+        Drop()
+        return 0
+    //Fix for recursive divergent clones
+    if(original_mind.GetRole(DIVERGENTCLONE))
+        var/datum/role/divergentclone/clone_role = original_mind.GetRole(DIVERGENTCLONE)
+        original_mind = clone_role.original_mind
+    src.original_mind = original_mind
+    evil = prob(50)
+    amnesia = pick(0, 1, 2)
+    return 1
+
+/datum/role/divergentclone/OnPostSetup(laterole)
+    . = ..()
+    ForgeMemory()
+
+    if(evil)
+        antag.current << sound('sound/voice/syndicate_intro.ogg')
+
+    if(evil && !original_mind.GetRole(TRAITOR))
+        //Find the original's PDA and add an uplink to it, if possible
+        var/origname = original_mind.name
+        for(var/obj/item/device/pda/P in PDAs)
+            if(P.owner == origname)
+                if(P.get_component(/datum/component/uplink))
+                    //If they somehow already have one, use that instead.
+                    uplink = P.get_component(/datum/component/uplink)
+                else
+                    uplink = P.add_component(/datum/component/uplink)
+                antag.total_TC += uplink.telecrystals
+                break
+    else if(original_mind.GetRole(TRAITOR))
+        var/datum/role/traitor/orig_role = original_mind.GetRole(TRAITOR)
+        if(orig_role)
+            uplink = orig_role.uplink
+    if(evil && uplink && (amnesia == 0 || amnesia == 2))
+        uplink_pw_revealed = TRUE
 
 
-/datum/role/divergentclone/Greet()
-    to_chat(antag.current, "<b><span class='warning'>You are a divergent clone!</span></b>")
-    to_chat(antag.current, "<span class='warning'>In a freak accident, the cloning machine has malfunctioned and created a divergent copy of you!</span>")
-    to_chat(antag.current, "<span class='warning'>You must convince the world that you are the original, or at the very least that you deserve to exist.</span>")
+/datum/role/divergentclone/Greet(var/greeting, var/custom)
+    . = ..()
+    if(!greeting)
+        return
+
+    to_chat(antag.current, "In a freak accident, the cloning machine has malfunctioned and created a divergent copy of you!")
+    if(evil)
+        to_chat(antag.current, "You must convince the world that you are the original at any cost, be that by talk, violence or subterfuge. Do not let anyone get in your way, including your original copy.")
+    else
+        to_chat(antag.current, "You must prove to the world that you are the original, or at the very least that you deserve to exist.")
+        to_chat(antag.current, "<span class='danger'>Remember that while your unique position may lead to conflict with your original copy, you are not an enemy of the station or the crew in general!</span>")
+    to_chat(antag.current, "<span class='notice'>Your memory may contain useful information about the original you. You should review it using the Notes verb under the IC tab.</span>")
+
+    var/original_is_traitor = original_mind.GetRole(TRAITOR)
+    if(evil && amnesia == 0 && original_is_traitor) //Traitor and knows the original is too
+        to_chat(antag.current, "<span class='warning'>You are a Syndicate traitor through and through, just like your original copy. You have the same objectives they do, but cooperation is optional.</span>")
+    else if(evil && amnesia == 0 && !original_is_traitor) //Traitor and knows the original is not
+        to_chat(antag.current, "<span class='warning'>The cloning process has awakened latent Syndicate brainwashing within you. Unlike your original copy, you are a Syndicate traitor.</span>")
+    else if(evil) //Traitor, no idea if the original is
+        to_chat(antag.current, "<span class='warning'>Memories of Syndicate training flood into your waxing consciousness. You are a Syndicate traitor.</span>")
+    else if(!evil && (amnesia == 0 || amnesia == 1) && original_is_traitor) //Not a traitor, but knows the original is
+        to_chat(antag.current, "<span class='warning'>The cloning process has undone the Syndicate brainwashing that used to affect you. You are not a Syndicate traitor, but your original copy is.</span>")
+
+    if(evil)
+        share_syndicate_codephrase(antag.current)
+    if(uplink)
+        var/obj/item/device/pda/P = uplink.parent
+        if(uplink_pw_revealed)
+            to_chat(antag.current, "<span class='warning'>You remember that your [P.name] is actually a Syndicate Uplink. If you manage to recover it, you may enter the code \"[uplink.unlock_code]\" as its ringtone to unlock its hidden features.</span>")
+            antag.store_memory("<B>Uplink Passcode:</B> [uplink.unlock_code] ([P.name]).", category=MIND_MEMORY_ANTAGONIST, forced=TRUE)
+        else
+            to_chat(antag.current, "<span class='warning'>You remember that your [P.name] is actually a Syndicate Uplink. However, you can't seem to remember the passcode off the top of your head. It will come back to you if you manage to recover the device.</span>")
+            antag.store_memory("<B>Uplink Passcode:</B> \[REDACTED\] ([P.name]).", category=MIND_MEMORY_ANTAGONIST, forced=TRUE)
+    else if(!uplink && evil)
+        to_chat(antag.current, "<span class='warning'>Unfortunately you don't remember having ever been provided with a Syndicate Uplink.</span>")
+
+
 
 /datum/role/divergentclone/ForgeObjectives()
-    AppendObjective(/datum/objective/freeform/prove_identity)
-    AppendObjective(/datum/objective/acquire_personal_id)
+    //The basic divergent clone objective
+    if(evil)
+        AppendObjective(/datum/objective/freeform/divergentclone_evil)
+    else
+        AppendObjective(/datum/objective/freeform/divergentclone_neutral)
+        AppendObjective(/datum/objective/acquire_personal_id)
+    
+    //Evil clones also get traitor objectives. New ones if the original is not a traitor, dupes of the original's objectives if they are.
+    if(evil)
+        if(original_mind.GetRole(TRAITOR))
+            var/datum/objective_holder/holder = original_mind.antag_roles[TRAITOR].objectives
+            for(var/datum/objective/O in holder.GetObjectives())
+                AppendObjective(O)
+
+        else //copypasted from syndicate.dm and yes I feel bad about it
+            if(prob(50))
+                //50% chance of a freeform to obscure the preferences of the original
+                AppendObjective(/datum/objective/freeform/syndicate)
+            else
+                AppendObjective(/datum/objective/target/assassinate)//no delay
+                AppendObjective(/datum/objective/target/steal)
+                switch(rand(1,100))
+                    if(1 to 30) // Die glorious death
+                        if(!(locate(/datum/objective/die) in objectives.GetObjectives()) && !(locate(/datum/objective/target/steal) in objectives.GetObjectives()))
+                            AppendObjective(/datum/objective/die)
+                        else
+                            if(prob(85))
+                                if (!(locate(/datum/objective/escape) in objectives.GetObjectives()))
+                                    AppendObjective(/datum/objective/escape)
+                            else
+                                if(prob(50))
+                                    if (!(locate(/datum/objective/hijack) in objectives.GetObjectives()))
+                                        AppendObjective(/datum/objective/hijack)
+                                else
+                                    if (!(locate(/datum/objective/minimize_casualties) in objectives.GetObjectives()))
+                                        AppendObjective(/datum/objective/minimize_casualties)
+                    if(31 to 90)
+                        if (!(locate(/datum/objective/escape) in objectives.objectives))
+                            AppendObjective(/datum/objective/escape)
+                    else
+                        if(prob(50))
+                            if (!(locate(/datum/objective/hijack) in objectives.objectives))
+                                AppendObjective(/datum/objective/hijack)
+                        else // Honk
+                            if (!(locate(/datum/objective/minimize_casualties) in objectives.GetObjectives()))
+                                AppendObjective(/datum/objective/minimize_casualties)
+    
+
+/datum/role/divergentclone/proc/ForgeMemory()
+    var/list/new_memory = list(MIND_MEMORY_GENERAL = "", MIND_MEMORY_ANTAGONIST = "", MIND_MEMORY_CUSTOM = "")
+    //All clones remember their original's general and custom memory
+    new_memory[MIND_MEMORY_GENERAL] = original_mind.memory[MIND_MEMORY_GENERAL]
+    new_memory[MIND_MEMORY_CUSTOM] = original_mind.memory[MIND_MEMORY_CUSTOM]
+    //antagonist memory is rebuilt from scratch
+    antag.memory = new_memory
+
+    //Details on original into the role memory
+    var/rolemem = "<br><b>You can confidently remember the following details about the original you:</b><br>"
+    rolemem += "- They are [original_mind.name], the [original_mind.assigned_role].<br>"
+    //Antag status
+    if(amnesia == 0 || (amnesia == 1 && !evil))
+        if(original_mind.antag_roles.len > 0)
+            for(var/R in original_mind.antag_roles)
+                rolemem += "- They are \a [R] with the following objectives:<br>"
+                var/datum/role/role = original_mind.antag_roles[R]
+                for(var/datum/objective/O in role.objectives.GetObjectives())
+                    rolemem += "&nbsp;&nbsp;- [O.explanation_text]<br>"
+        else
+            rolemem += "- They are not an enemy of the station.<br>"
+    extra_role_memory = rolemem
+
+/datum/role/divergentclone/process()
+    ..()
+    if(antag.current.gcDestroyed || antag.current.stat == DEAD)
+        return // dead or destroyed
+    
+    //check if we've found the uplink and should reveal the passcode
+    if(!uplink_pw_revealed && uplink)
+        var/obj/item/device/pda/P = uplink.parent
+        if(P in get_contents_in_object(antag.current))
+            antag.current << sound('sound/voice/syndicate_intro.ogg')
+            to_chat(antag.current, "<span class='warning'>Upon recovering \the [P.name], you remember the passcode: \"[uplink.unlock_code]\". Enter it as the device's ringtone to unlock its hidden features.</span>")
+            antag.memory[MIND_MEMORY_ANTAGONIST] = unredact_uplink_pw(antag.memory[MIND_MEMORY_ANTAGONIST], uplink)
+            uplink_pw_revealed = TRUE
+
+
+/datum/role/divergentclone/proc/redact_uplink_pw(var/memory)
+    var/regex/passcode_regex = new(@"<B>Uplink Passcode:</B> ([\d]{3} (?:Alpha|Bravo|Delta|Omega))")
+    var/result = passcode_regex.Find(memory)
+    if(result)
+        var/passcode = passcode_regex.group[1]
+        memory = replacetext(memory, passcode, "\[REDACTED\]")
+
+    var/regex/frequency_regex = new(@"<B>Uplink frequency:</B> ([\d]{3}\.[\d])")
+    result = frequency_regex.Find(memory)
+    if(result)
+        var/frequency = frequency_regex.group[1]
+        memory = replacetext(memory, frequency, "\[REDACTED\]")
+    return memory
+
+/datum/role/divergentclone/proc/unredact_uplink_pw(var/memory, var/datum/component/uplink/uplink)
+    if(!uplink)
+        return memory
+
+    var/regex/passcode_regex = new(@"<B>Uplink Passcode:</B> (\[REDACTED\])")
+    var/result = passcode_regex.Find(memory)
+    if(result)
+        var/passcode = passcode_regex.group[1]
+        memory = replacetext(memory, passcode, "[uplink.unlock_code]")
+
+    var/regex/frequency_regex = new(@"<B>Uplink frequency:</B> (\[REDACTED\])")
+    result = frequency_regex.Find(memory)
+    if(result)
+        var/frequency = frequency_regex.group[1]
+        memory = replacetext(memory, frequency, "[uplink.unlock_frequency]")
+    return memory
+
+/datum/role/divergentclone/GetMemory(var/datum/mind/M, var/admin_edit = FALSE)
+    var/text = ..()
+    text += extra_role_memory
+    return text
+
+/spell/targeted/ghost/divergentclone
+    name = "Spawn as Divergent Clone"
+    desc = "Use while near a cloning pod to spawn in as a divergent clone."
+    override_icon = 'icons/logos.dmi'
+    hud_state = "divergentclone-logo"
+
+/spell/targeted/ghost/divergentclone/cast()
+    var/mob/dead/observer/ghost = holder
+    ASSERT(istype(ghost))
+    
+    //Find nearest cloning pod and move to it
+    var/obj/machinery/cloning/clonepod/pod
+    var/dist = 100
+    for(var/obj/machinery/cloning/clonepod/P in range(ghost, 7))
+        var/new_dist = get_dist(P, ghost)
+        if(new_dist < dist)
+            dist = new_dist
+            pod = P
+    if(!pod)
+        switch(alert(ghost, "No nearby cloning pods found. Would you like to jump to the nearest eligible pod?", "Jump to nearest pod?", "Yes", "No"))
+            if("Yes")
+                pod = find_eligible_pod(ghost)
+            else
+                return
+    else if(pod.occupants.len == 0 && pod.cloned_records.len == 0)
+        switch(alert(ghost, "This pod has never cloned anyone. Would you like to jump to the nearest eligible pod?", "Jump to nearest pod?", "Yes", "No"))
+            if("Yes")
+                pod = find_eligible_pod(ghost)
+            else
+                return
+    ghost.forceMove(get_turf(pod))
+
+    var/mob/living/clone = null
+    var/datum/mind/original_mind = null
+    if(pod.occupants.len > 0)
+        if(pod.occupants.len == 1)
+            var/mob/living/O = pod.occupants[1]
+            var/occupant_name = O.real_name
+            switch(alert(ghost, "This pod is currently cloning [occupant_name]. Do you want to insert yourself as their twin?", "Insert as twin?", "Yes", "No"))
+                if("Yes")
+                    if(!(O in pod.occupants))
+                        to_chat(ghost, "<span class='warning'>The occupant seems to have exited the pod. Please try again.</span>")
+                        return
+                    original_mind = O.mind
+                    clone = clone_twin(pod, O, ghost.mind)
+                else
+                    to_chat(ghost, "<span class='notice'>Twin selection cancelled.</span>")
+                    return
+        else
+            var/list/used_keys[0]
+            var/list/occupants[0]
+            for(var/mob/living/O in pod.occupants)
+                var/key = avoid_assoc_duplicate_keys(O.name, used_keys)
+                occupants[key] = O
+            var/selection = input("This pod is currently cloning multiple people. Please select the person you would like to twin.", "Select twin target", null, null) as null|anything in occupants
+            if(!selection)
+                to_chat(ghost, "<span class='notice'>Twin selection cancelled.</span>")
+                return
+            var/mob/living/O = occupants[selection]
+            if(!(O in pod.occupants))
+                to_chat(ghost, "<span class='warning'>The occupant seems to have exited the pod. Please try again.</span>")
+                return
+            original_mind = O.mind
+            clone = clone_twin(pod, O, ghost.mind)
+    else if(pod.cloned_records.len > 0)
+        var/list/used_keys[0]
+        var/list/records[0]
+        for(var/datum/dna2/record/R in pod.cloned_records)
+            var/key = avoid_assoc_duplicate_keys(R.name, used_keys)
+            records[key] = R
+        var/selection = input("This pod has no occupants. Please select a record to clone.", "Divergent clone", null, null) as null|anything in records
+        if(!selection)
+            to_chat(ghost, "<span class='notice'>Twin selection cancelled.</span>")
+            return
+        var/datum/dna2/record/record = records[selection]
+        original_mind = locate(record.mind)
+        clone = clone_record(pod, record, ghost)
+
+    if(!clone)
+        to_chat(ghost, "<span class='warning'>Clone divergence failed. Please try again.</span>")
+        return
+    
+    //Add the role to the clone
+    var/datum/role/divergentclone/role = new /datum/role/divergentclone(clone.mind, override=TRUE, original_mind=original_mind)
+    if(!role)
+        to_chat(ghost, "<span class='warning'>Clone divergence failed. Please try again.</span>")
+        return
+    role.OnPostSetup()
+    role.Greet(GREET_DEFAULT)
+    role.ForgeObjectives()
+    role.AnnounceObjectives()
+
+    //Remove the spell from the ghost just to be safe
+    ghost.remove_spell(/spell/targeted/ghost/divergentclone)
+
+
+/spell/targeted/ghost/divergentclone/proc/find_eligible_pod(var/mob/dead/observer/ghost)
+    var/list/clonepods = list()
+    for(var/obj/machinery/cloning/clonepod/P in machines)
+        if(P.z == map.zCentcomm)
+            continue
+        if(P.occupants.len > 0 || P.cloned_records.len > 0)
+            clonepods += P
+    if(clonepods.len == 0)
+        return null
+    var/obj/machinery/cloning/clonepod/pod = clonepods[1]
+    var/dist = get_dist(pod, ghost)
+    for(var/obj/machinery/cloning/clonepod/P in clonepods)
+        var/new_dist = get_dist(P, ghost)
+        if(new_dist < dist)
+            dist = new_dist
+            pod = P
+    return pod
+
+/spell/targeted/ghost/divergentclone/proc/clone_twin(var/obj/machinery/cloning/clonepod/pod, var/mob/living/original, var/datum/mind/clonemind)
+    var/mob/living/clone = pod.growtwin(original, clonemind, do_mind_transfer=FALSE, allow_multiple=TRUE, force_clone=TRUE)
+    if(!clone)
+        return null
+    var/datum/mind/new_mind = clone.mind
+    var/datum/mind/orig_mind = original.mind
+    new_mind.name = orig_mind.name
+    //new_mind.memory = orig_mind.memory
+    new_mind.assigned_role = orig_mind.assigned_role
+    new_mind.body_archive = orig_mind.body_archive
+    new_mind.role_alt_title = orig_mind.role_alt_title
+    new_mind.miming = orig_mind.miming
+    new_mind.faith = orig_mind.faith
+    new_mind.initial_account = orig_mind.initial_account
+    new_mind.initial_wallet_funds = orig_mind.initial_wallet_funds
+
+    return clone
+
+/spell/targeted/ghost/divergentclone/proc/clone_record(var/obj/machinery/cloning/clonepod/pod, var/datum/dna2/record/orig_record, var/mob/dead/observer/G)
+    var/datum/dna2/record/R = new /datum/dna2/record()
+    R.dna = orig_record.dna.Clone()
+    R.ckey = G.ckey
+    R.mind = "\ref[G.mind]"
+    R.id = copytext(md5(R.dna.real_name), 2, 6)
+    R.name = R.dna.real_name
+    R.types = DNA2_BUF_UI | DNA2_BUF_UE | DNA2_BUF_SE
+    R.languages = orig_record.languages.Copy()
+    R.attack_log = orig_record.attack_log.Copy()
+    R.default_language = orig_record.default_language
+    R.times_cloned = orig_record.times_cloned
+    R.talkcount = orig_record.talkcount
+
+    var/mob/living/carbon/human/clone = pod.growclone(R, copy_progress_from=null, do_mind_transfer=FALSE, allow_multiple=FALSE, force_clone=TRUE)
+    var/datum/mind/new_mind = clone.mind
+    var/datum/mind/orig_mind = locate(orig_record.mind)
+    new_mind.name = orig_mind.name
+    //new_mind.memory = orig_mind.memory
+    new_mind.assigned_role = orig_mind.assigned_role
+    new_mind.body_archive = orig_mind.body_archive
+    new_mind.role_alt_title = orig_mind.role_alt_title
+    new_mind.miming = orig_mind.miming
+    new_mind.faith = orig_mind.faith
+    new_mind.initial_account = orig_mind.initial_account
+    new_mind.initial_wallet_funds = orig_mind.initial_wallet_funds
+
+    return clone

@@ -1,15 +1,25 @@
-/datum/objective/freeform/prove_identity
+/datum/objective/freeform/divergentclone_neutral
     explanation_text = "Convince the world that you are the real <person>, or at least as real as the other copy."
 
-/datum/objective/freeform/prove_identity/format_explanation()
+/datum/objective/freeform/divergentclone_neutral/format_explanation()
     return "Convince the world that you are the real [owner.name], or at least as real as the other copy."
 
-/datum/objective/freeform/prove_identity/PostAppend()
+/datum/objective/freeform/divergentclone_neutral/PostAppend()
+    explanation_text = format_explanation()
+    return TRUE
+
+/datum/objective/freeform/divergentclone_evil
+    explanation_text = "Convince the world that you are the real <person> at any cost, be that by talk, violence or subterfuge. Do not let anyone get in your way, including your original copy."
+
+/datum/objective/freeform/divergentclone_evil/format_explanation()
+    return "Convince the world that you are the real [owner.name] at any cost, be that by talk, violence or subterfuge. Do not let anyone get in your way, including your original copy."
+
+/datum/objective/freeform/divergentclone_evil/PostAppend()
     explanation_text = format_explanation()
     return TRUE
 
 /datum/objective/acquire_personal_id
-    explanation_text = "Acquire an ID card matching your identity and DNA."
+    explanation_text = "Acquire an ID card matching your name or DNA."
     name = "Acquire personal ID card"
 
 /datum/objective/acquire_personal_id/IsFulfilled()
@@ -29,7 +39,7 @@
         else
             continue
         var/datum/dna/D = owner.current.dna
-        if(I.dna_hash == D.unique_enzymes)
+        if((I.dna_hash == D.unique_enzymes) || (I.registered_name == owner.name))
             return TRUE
             
     return FALSE

@@ -1105,23 +1105,33 @@
 /datum/dynamic_ruleset/midround/from_ghosts/divergentclone
 	name = "Divergent Clone"
 	role_category = /datum/role/divergentclone
-	required_pop = list(4, 4, 4, 4, 4, 4, 4, 4, 4, 4)
 	required_candidates = 1
-	weight = BASE_RULESET_WEIGHT
+	weight = 3
 	weight_category = "Clone"
-	cost = 10
-	requirements = list(20,20,15,10,10,10,10,10,10,10)
+	cost = 5
+	requirements = list(40,30,20,10,10,10,10,10,10,10)
 	high_population_requirement = 10
 	logo = "divergentclone-logo"
 	repeatable = TRUE
 	makeBody = FALSE
-	var/obj/machinery/cloning/clonepod/target_pod = null
-	var/datum/dna2/record/original_dna_record = null //unmodified original's DNA record. Make sure to swap the ckey etc. out once spawning.
+	flags = MINOR_RULESET
 
 /datum/dynamic_ruleset/midround/from_ghosts/divergentclone/ready(var/forced = 0)
 	if(!config.revival_cloning)
 		return 0
 	
+	//Check that we have at least one ghost who isn't already a clone waiting to spawn
+	var/list/candies = dead_players + list_observers
+	var/list/valids[0]
+	for(var/mob/dead/observer/G in candies)
+		if(locate(/spell/targeted/ghost/divergentclone) in G.spell_list)
+			continue
+		valids += G
+	message_admins("Found [valids.len] valid divergent clone candidates.")
+	if(valids.len == 0)
+		message_admins("Tried to force divergent clone, but no valid candidates found.")
+		return 0
+
 	var/list/clonepods = list()
 	for(var/obj/machinery/cloning/clonepod/pod in machines)
 		//Check that the pod has cloned something before
@@ -1129,167 +1139,18 @@
 		if(pod.cloned_records.len > 0)
 			clonepods += pod
 	if(clonepods.len == 0)
+		if(forced)
+			message_admins("Tried to force divergent clone, but no valid pods found.")
 		return 0
-	target_pod = pick(clonepods)
-	original_dna_record = pick(target_pod.cloned_records)
 	return ..()
-	
 
 /datum/dynamic_ruleset/midround/from_ghosts/divergentclone/finish_setup(mob/new_character, index)
-	to_chat(new_character, "<span class='notice'>You were selected to be a divergent clone!</span>")
-	var/mob/living/occupant = null
-	if(target_pod.working)
-		if(target_pod.occupant)
-			to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently occupied. You will spawn in as a clone of whoever is inside when they exit. Get ready!</span>")
-			occupant = target_pod.occupant
-		else
-			to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently busy. Please stand by. You will be spawned in in a moment.</span>")
-		var/timeout = 0
-		var/reminder = 1
-		while(new_character && (target_pod.working))
-			if(timeout > 4 MINUTES) //4 minutes should be enough; cloning should take at most about 3 minutes normally.
-				break
-			else if(timeout > reminder MINUTES)
-				reminder++
-				if(target_pod.occupant)
-					to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently occupied. You will spawn in as a clone of whoever is inside when they exit. Get ready!</span>")
-				else
-					to_chat(new_character, "<span class='notice'>The [formatGhostJump(target_pod, initial(target_pod.name))] is currently busy. Please stand by. You will be spawned in in a moment.</span>")
-			sleep(1 SECONDS)
-			timeout += 1 SECONDS
+	to_chat(new_character, "<span class='notice'><b>You were selected to be a divergent clone, but will not be spawned in yet!</b></span>")
+	to_chat(new_character, "<span class='notice'>You have been granted the \"Spawn as Divergent Clone\" ghost spell. Use this near a cloning pod to spawn in as a divergent clone of someone who was cloned, or is currently being cloned, in that pod.</span>")
+	to_chat(new_character, "<span class='notice'>Using this spell on an unoccupied cloning pod will allow you to choose a record of a person previously cloned in that pod. Using it on an occupied pod will cause you to become a twin of the person currently in the pod, and be ejected from the pod at the same time as them.</span>")
+	to_chat(new_character, "<span class='notice'>Remember: you can only use this spell once, and re-entering your corpse will remove it permanently. In fact, for your convenience we have removed your ability to re-enter your corpse.</span>")
 	
-	if(!new_character)
-		log_admin("Divergent Clone ruleset failed to spawn a clone due to the applicant leaving.")
-		message_admins("Divergent Clone ruleset failed to spawn a clone due to the applicant leaving.")
-		mode.refund_midround_threat(cost)
-		mode.threat_log += "[worldtime2text()]: Rule [name] refunded [cost] (applicant left while waiting)"
-		mode.executed_rules -= src
-		return
+	var/mob/dead/observer/G = new_character.ghostize(FALSE)	//sanity, plus to save people from their stupidity we don't allow re-entering
+	G.add_spell(new /spell/targeted/ghost/divergentclone)
+	//we don't assign any roles, objectives or anything here -- that's done when the cloning is finished
 
-	//if the pod is STILL occupied, just forcibly eject who or whatever is inside
-	if(target_pod.mess || target_pod.working)
-		if(target_pod.occupant)
-			occupant = target_pod.occupant
-		target_pod.locked = FALSE
-		target_pod.go_out()
-		if(target_pod.mess || target_pod.working)
-			log_admin("Divergent Clone ruleset failed to spawn a clone due to the cloning pod being occupied and unable to be cleared.")
-			message_admins("Divergent Clone ruleset failed to spawn a clone due to the cloning pod being occupied and unable to be cleared.")
-			mode.refund_midround_threat(cost)
-			mode.threat_log += "[worldtime2text()]: Rule [name] refunded [cost] (cloning pod occupied and unable to be cleared)"
-			mode.executed_rules -= src
-			return
-	
-	var/mob/clone = null
-	if(occupant == null)
-		clone = generate_body_in_cloner(new_character)
-	else
-		clone = generate_body_outside_cloner(new_character, occupant)
-		target_pod.visible_message("<span class='warning'>\The [target_pod.name] ejects an unexpected extra clone!</span>")
-	
-	if(!clone)
-		to_chat(new_character, "<span class='warning'>Unfortunately the cloning pod failed to create you, and your second chance is cancelled. We apologize for the inconvenience.</span>")
-		log_admin("Divergent Clone ruleset failed to start producing a clone in the pod.")
-		message_admins("Divergent Clone ruleset failed to start producing a clone in the pod.")
-		mode.refund_midround_threat(cost)
-		mode.threat_log += "[worldtime2text()]: Rule [name] refunded [cost] (failed to generate body)"
-		mode.executed_rules -= src
-		return
-	new_character = clone
-	var/datum/role/new_role = new role_category
-	new_role.AssignToRole(new_character.mind,1)
-	setup_role(new_role)
-
-
-//By the time this is called, the target pod should be free and ready to clone.
-/datum/dynamic_ruleset/midround/from_ghosts/divergentclone/proc/generate_body_in_cloner(var/mob/applicant)
-	//We create a temporary dummy mob because this creates a new mind for the applicant.
-	var/mob/living/carbon/human/H = new(pick(latejoin))
-	H.ckey = applicant.ckey
-	var/datum/mind/new_mind = H.mind
-	var/datum/mind/original_mind = locate(original_dna_record.mind)
-	new_mind.name = original_mind.name
-	new_mind.memory = original_mind.memory
-	new_mind.assigned_role = original_mind.assigned_role
-	new_mind.body_archive = original_mind.body_archive
-	new_mind.role_alt_title = original_mind.role_alt_title
-	new_mind.miming = original_mind.miming
-	applicant = H.ghostize(FALSE)
-
-	var/datum/dna2/record/R = new /datum/dna2/record()
-	R.dna = original_dna_record.dna.Clone()
-	R.ckey = applicant.ckey
-	R.mind = "\ref[H.mind]"
-	R.id = copytext(md5(R.dna.real_name), 2, 6)
-	R.name = R.dna.real_name
-	R.types = DNA2_BUF_UI | DNA2_BUF_UE | DNA2_BUF_SE
-	R.languages = original_dna_record.languages.Copy()
-	R.attack_log = original_dna_record.attack_log.Copy()
-	R.default_language = original_dna_record.default_language
-	R.times_cloned = original_dna_record.times_cloned
-	R.talkcount = original_dna_record.talkcount
-
-	var/mob/living/carbon/human/new_clone = target_pod.growclone(R, TRUE)
-	QDEL_NULL(H)
-	return new_clone
-
-//Creates a fresh body skipping the cloner entirely (for when we want to do a simultaneous twin cloning)
-//this is some ugly repetition and copypaste from the cloner code but w/e
-/datum/dynamic_ruleset/midround/from_ghosts/divergentclone/proc/generate_body_outside_cloner(var/mob/applicant, var/mob/living/occupant)
-	var/mob/living/carbon/human/H = new(get_turf(occupant), occupant.dna.species, delay_ready_dna = TRUE)
-	H.ckey = applicant.ckey
-	var/datum/mind/new_mind = H.mind
-	var/datum/mind/original_mind = occupant.mind
-	new_mind.name = original_mind.name
-	new_mind.memory = original_mind.memory
-	new_mind.assigned_role = original_mind.assigned_role
-	new_mind.body_archive = original_mind.body_archive
-	new_mind.role_alt_title = original_mind.role_alt_title
-	new_mind.miming = original_mind.miming
-
-	H.times_cloned = occupant.times_cloned
-	H.talkcount = occupant.talkcount
-	
-	if(isplasmaman(H))
-		H.fire_sprite = "Plasmaman"
-	
-	H.dna = occupant.dna.Clone()
-	H.dna.flavor_text = occupant.dna.flavor_text
-	H.dna.species = occupant.dna.species
-	if(H.dna.species != "Human")
-		H.set_species(H.dna.species, TRUE)
-	
-	H.adjustToxLoss(occupant.getToxLoss())
-	H.adjustCloneLoss(occupant.getCloneLoss())
-	H.adjustOxyLoss(occupant.getOxyLoss())
-	H.adjustBrainLoss(occupant.getBrainLoss())
-	H.Paralyse(occupant.paralysis)
-	H.stat = occupant.stat
-	H.updatehealth()
-
-	if (H.mind.miming)
-		H.add_spell(new /spell/aoe_turf/conjure/forcewall/mime, "grey_spell_ready")
-		if (H.mind.miming == MIMING_OUT_OF_CHOICE)
-			H.add_spell(new /spell/targeted/oathbreak/)
-	
-	H.UpdateAppearance()
-	H.set_species(H.dna.species)
-
-	if(!target_pod.upgraded)
-		randmutb(H)
-	H.dna.mutantrace = occupant.dna.mutantrace
-	H.update_mutantrace()
-
-	for(var/datum/language/L in occupant.languages)
-		H.add_language(L.name)
-		if (L == occupant.default_language)
-			H.default_language = occupant.default_language
-	H.attack_log = occupant.attack_log.Copy()
-	H.real_name = H.dna.real_name
-	H.flavor_text = H.dna.flavor_text
-
-	if(H.mind)
-		H.mind.suiciding = FALSE
-	H.update_name()
-
-	return H
