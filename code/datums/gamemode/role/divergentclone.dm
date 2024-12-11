@@ -261,6 +261,9 @@
                 pod = find_eligible_pod(ghost)
             else
                 return
+    if(pod == null)
+        to_chat(ghost, "<span class='warning'>No eligible cloning pods found. Please try again later.</span>")
+        return
     ghost.forceMove(get_turf(pod))
 
     var/mob/living/clone = null
