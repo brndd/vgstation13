@@ -390,11 +390,6 @@
         to_chat(ghost, "<span class='warning'>Clone divergence failed. Please try again.</span>")
         return
 
-    //Re-do greetings and objectives
-    role.Greet(GREET_DEFAULT)
-    role.ForgeObjectives()
-    role.AnnounceObjectives()
-
     //Remove the spell from the ghost just to be safe
     ghost.remove_spell(/spell/targeted/ghost/divergentclone)
 
