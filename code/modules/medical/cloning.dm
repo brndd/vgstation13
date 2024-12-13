@@ -439,7 +439,7 @@
     R.times_cloned = orig_record.times_cloned
     R.talkcount = orig_record.talkcount
 
-    var/mob/living/carbon/human/clone = growclone(R, copy_progress_from=null, do_mind_transfer=TRUE, allow_multiple=FALSE, force_clone=TRUE)
+    var/mob/living/carbon/human/clone = growclone(R, copy_progress_from=null, do_mind_transfer=TRUE, allow_multiple=TRUE, force_clone=TRUE)
     var/datum/mind/new_mind = clone.mind
     var/datum/mind/orig_mind = locate(orig_record.mind)
     new_mind.name = orig_mind.name

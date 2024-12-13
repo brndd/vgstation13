@@ -361,9 +361,6 @@
         if(!pod)
             to_chat(usr, "<span class='warning'>No nearby cloning pods found!</span>")
             return
-        if(pod.occupants.len > 0)
-            to_chat(usr, "<span class='warning'>The cloning pod is occupied!</span>")
-            return
         
         var/mob/living/clone = null
         if(force_spawn_as.current && istype(force_spawn_as.current, /mob/living/carbon/human))
