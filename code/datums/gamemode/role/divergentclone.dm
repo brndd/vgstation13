@@ -321,6 +321,7 @@
         var/new_amnesia = text2num(href_list["setAmnesia"])
         if(new_amnesia < 0 || new_amnesia > 2)
             return
+        amnesia = new_amnesia
         to_chat(usr, "<span class='notice'>The clone's amnesia level has been set to [new_amnesia].</span>")
     if(href_list["setForceSpawn"])
         var/list/used_keys[0]
