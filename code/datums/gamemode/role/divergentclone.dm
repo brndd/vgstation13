@@ -14,6 +14,7 @@
     default_admin_voice = "The Ancient Reptilian Brain"
     admin_voice_style = "bold"
     var/has_spawned_in = FALSE
+    var/datum/mind/force_spawn_as = null //for admins to force the clone to spawn as a clone of a specific character
     var/datum/mind/original_mind = null
     var/extra_role_memory = ""
     var/uplink_pw_revealed = FALSE
@@ -289,14 +290,21 @@
         if(amnesia != 2)
             dat += " <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];setAmnesia=2;'>(Set to Hazy)</a>"
         dat += "<br>"
+        dat += "<b>Will spawn in as: </b> [force_spawn_as ? force_spawn_as.name : "player's choice"] "
+        if (force_spawn_as)
+            dat += "<a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];clearForceSpawn=1;'>(Clear)</a><br>"
+        else
+            dat += "<a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];setForceSpawn=1;'>(Pick character)</a><br>"
 
-
+        if (force_spawn_as)
+            dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];forceSpawn=1;'>(Force spawn NOW at nearest cloning pod)</a><br>"
     else
         if(uplink)
             var/obj/item/device/pda/P = uplink.parent
             var/uplink_name = P ? P.name : "unknown PDA"
             dat += "<b>Uplink found:</b> [uplink_name] [uplink_pw_revealed ? "(knows the passcode)" : "(does not know passcode)"]<br>"
-            dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];revealUplinkPW=1;'>(Reveal passcode)</a><br>"
+            if(!uplink_pw_revealed)
+                dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];revealUplinkPW=1;'>(Reveal passcode)</a><br>"
             dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];telecrystalsSet=1;'>Telecrystals: [uplink.telecrystals] (Set telecrystals)</a><br>"
             dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];removeuplink=1;'>(Remove uplink)</a><br>"
             dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];jumpToUplink=1;'>(Jump to uplink's position)</a><br>"
@@ -314,6 +322,56 @@
         if(new_amnesia < 0 || new_amnesia > 2)
             return
         to_chat(usr, "<span class='notice'>The clone's amnesia level has been set to [new_amnesia].</span>")
+    if(href_list["setForceSpawn"])
+        var/list/used_keys[0]
+        var/list/minds[0]
+        for(var/datum/mind/M in ticker.minds)
+            if(!M.current && !M.body_archive)
+                continue
+            var/key = avoid_assoc_duplicate_keys(M.name, used_keys)
+            minds[key] = M
+        var/selection = input("Which character should the clone spawn in as?", "Choose a character", null, null) as null|anything in minds
+        if(selection)
+            force_spawn_as = selection
+            to_chat(usr, "<span class='notice'>The clone will now spawn in as [selection.name].</span>")
+    if(href_list["clearForceSpawn"])
+        force_spawn_as = null
+        to_chat(usr, "<span class='notice'>The clone will now spawn in as the player's choice.</span>")
+    if(href_list["forceSpawn"])
+        if(!force_spawn_as)
+            to_chat(usr, "<span class='warning'>Cannot force spawn without a character selected!</span>")
+            return
+        var/obj/machinery/cloning/clonepod/pod
+        var/dist = 100
+        for(var/obj/machinery/cloning/clonepod/P in range(usr, 7))
+            var/new_dist = get_dist(P, usr)
+            if(new_dist < dist)
+                dist = new_dist
+                pod = P
+        if(!pod)
+            to_chat(usr, "<span class='warning'>No nearby cloning pods found!</span>")
+            return
+        if(pod.occupants.len > 0)
+            to_chat(usr, "<span class='warning'>The cloning pod is occupied!</span>")
+            return
+        
+        var/mob/living/clone = null
+        if(force_spawn_as.current && istype(force_spawn_as.current, /mob/living/carbon/human))
+            var/mob/living/O = force_spawn_as.current
+            original_mind = force_spawn_as
+            clone = clone_twin(pod, O, antag)
+        else
+            //Try to get a body from the mind's body archive
+            var/datum/dna2/record/D = force_spawn_as.body_archive.data["dna_records"]
+            original_mind = force_spawn_as
+            clone = clone_record(pod, D, antag)
+        if(!clone)
+            to_chat(usr, "<span class='warning'>Failed to spawn in the clone! This shouldn't happen, but maybe try again?</span>")
+            return
+        if(!on_spawn_in(force_spawn_as))
+            stack_trace("Divergent clone failed to spawn in.")
+            return
+
     if(href_list["jumpToUplink"])
         if(uplink)
             usr.forceMove(get_turf(uplink.parent))
@@ -326,6 +384,10 @@
         find_or_create_uplink()
         var/obj/item/device/pda/P = uplink.parent
         if(P)
+            if(uplink_pw_revealed)
+                to_chat(antag.current, "<span class='warning'>You remember that your [P.name] is actually a Syndicate Uplink. If you manage to recover it, you may enter the code \"[uplink.unlock_code]\" as its ringtone to unlock its hidden features.</span>")
+            else
+                to_chat(antag.current, "<span class='warning'>You remember that your [P.name] is actually a Syndicate Uplink. However, you can't seem to remember the passcode off the top of your head. It will come back to you if you manage to recover the device.</span>")
             to_chat(usr, "<span class='notice'>[P.name] is now the clone's uplink.</span>")
     if(href_list["telecrystalsSet"])
         if(!uplink)
@@ -417,54 +479,72 @@
 
     var/mob/living/clone = null
     var/datum/mind/original_mind = null
-    if(pod.occupants.len > 0)
-        if(pod.occupants.len == 1)
-            var/mob/living/O = pod.occupants[1]
-            var/occupant_name = O.real_name
-            switch(alert(ghost, "This pod is currently cloning [occupant_name]. Do you want to insert yourself as their twin?", "Insert as twin?", "Yes", "No"))
-                if("Yes")
-                    if(!(O in pod.occupants))
-                        to_chat(ghost, "<span class='warning'>The occupant seems to have exited the pod. Please try again.</span>")
+    if(force_spawn_as)
+        if(force_spawn_as.current && istype(force_spawn_as.current, /mob/living/carbon/human))
+            to_chat(ghost, "<span class='warning'>A mysterious force causes you to reincarnate as a clone of [force_spawn_as.name]!</span>")
+            var/mob/living/O = force_spawn_as.current
+            original_mind = force_spawn_as
+            clone = clone_twin(pod, O, ghost.mind)
+        else
+            //Try to get a body from the mind's body archive
+            var/datum/dna2/record/D = force_spawn_as.body_archive.data["dna_records"]
+            to_chat(ghost, "<span class='warning'>A mysterious force causes you to reincarnate as a clone of [D.dna.real_name]!</span>")
+            original_mind = force_spawn_as
+            clone = clone_record(pod, D, ghost.mind)
+        //If something fails, remove force_spawn_as so the player can try again
+        if(!clone)
+            force_spawn_as = null
+    else
+        if(pod.occupants.len > 0)
+            var/mob/living/O = null
+            if(pod.occupants.len == 1)
+                O = pod.occupants[1]
+                var/occupant_name = O.real_name
+                switch(alert(ghost, "This pod is currently cloning [occupant_name]. Do you want to insert yourself as their twin?", "Insert as twin?", "Yes", "No"))
+                    if("Yes")
+                        if(!(O in pod.occupants))
+                            to_chat(ghost, "<span class='warning'>The occupant seems to have exited the pod. Please try again.</span>")
+                            return
+                    else
+                        to_chat(ghost, "<span class='notice'>Twin selection cancelled.</span>")
                         return
-                    original_mind = O.mind
-                    clone = clone_twin(pod, O, ghost.mind)
-                else
+            else
+                var/list/used_keys[0]
+                var/list/occupants[0]
+                for(var/mob/living/occupant in pod.occupants)
+                    var/key = avoid_assoc_duplicate_keys(occupant.name, used_keys)
+                    occupants[key] = occupant
+                var/selection = input("This pod is currently cloning multiple people. Please select the person you would like to twin.", "Select twin target", null, null) as null|anything in occupants
+                if(!selection)
                     to_chat(ghost, "<span class='notice'>Twin selection cancelled.</span>")
                     return
-        else
+                O = occupants[selection]
+                if(!(O in pod.occupants))
+                    to_chat(ghost, "<span class='warning'>The occupant seems to have exited the pod. Please try again.</span>")
+                    return
+            original_mind = O.mind
+            clone = clone_twin(pod, O, ghost.mind)
+        else if(pod.cloned_records.len > 0)
             var/list/used_keys[0]
-            var/list/occupants[0]
-            for(var/mob/living/O in pod.occupants)
-                var/key = avoid_assoc_duplicate_keys(O.name, used_keys)
-                occupants[key] = O
-            var/selection = input("This pod is currently cloning multiple people. Please select the person you would like to twin.", "Select twin target", null, null) as null|anything in occupants
+            var/list/records[0]
+            for(var/datum/dna2/record/R in pod.cloned_records)
+                var/key = avoid_assoc_duplicate_keys(R.name, used_keys)
+                records[key] = R
+            var/selection = input("This pod has no occupants. Please select a record to clone.", "Divergent clone", null, null) as null|anything in records
             if(!selection)
                 to_chat(ghost, "<span class='notice'>Twin selection cancelled.</span>")
                 return
-            var/mob/living/O = occupants[selection]
-            if(!(O in pod.occupants))
-                to_chat(ghost, "<span class='warning'>The occupant seems to have exited the pod. Please try again.</span>")
-                return
-            original_mind = O.mind
-            clone = clone_twin(pod, O, ghost.mind)
-    else if(pod.cloned_records.len > 0)
-        var/list/used_keys[0]
-        var/list/records[0]
-        for(var/datum/dna2/record/R in pod.cloned_records)
-            var/key = avoid_assoc_duplicate_keys(R.name, used_keys)
-            records[key] = R
-        var/selection = input("This pod has no occupants. Please select a record to clone.", "Divergent clone", null, null) as null|anything in records
-        if(!selection)
-            to_chat(ghost, "<span class='notice'>Twin selection cancelled.</span>")
-            return
-        var/datum/dna2/record/record = records[selection]
-        original_mind = locate(record.mind)
-        clone = clone_record(pod, record, ghost)
+            var/datum/dna2/record/record = records[selection]
+            original_mind = locate(record.mind)
+            clone = clone_record(pod, record, ghost.mind)
 
     if(!clone)
+        original_mind = null
         to_chat(ghost, "<span class='warning'>Clone divergence failed. Please try again.</span>")
         return
     
+    ghost.remove_spell(/spell/targeted/ghost/divergentclone)
+
     var/datum/role/divergentclone/role = clone.mind.GetRole(DIVERGENTCLONE)
     if(!role) //if they somehow don't have the role already, give it to them
         role = new /datum/role/divergentclone(clone.mind, override=TRUE)
@@ -472,11 +552,7 @@
             to_chat(ghost, "<span class='warning'>Clone divergence failed. Please try again.</span>")
             return
     if(!role.on_spawn_in(original_mind))
-        to_chat(ghost, "<span class='warning'>Clone divergence failed. Please try again.</span>")
-        return
-
-    //Remove the spell from the ghost just to be safe
-    ghost.remove_spell(/spell/targeted/ghost/divergentclone)
+        stack_trace("Divergent clone failed to spawn in.")
 
 
 /spell/targeted/ghost/divergentclone/proc/find_eligible_pod(var/mob/dead/observer/ghost)
@@ -515,11 +591,11 @@
 
     return clone
 
-/spell/targeted/ghost/divergentclone/proc/clone_record(var/obj/machinery/cloning/clonepod/pod, var/datum/dna2/record/orig_record, var/mob/dead/observer/G)
+/spell/targeted/ghost/divergentclone/proc/clone_record(var/obj/machinery/cloning/clonepod/pod, var/datum/dna2/record/orig_record, var/datum/mind/clonemind)
     var/datum/dna2/record/R = new /datum/dna2/record()
     R.dna = orig_record.dna.Clone()
-    R.ckey = G.ckey
-    R.mind = "\ref[G.mind]"
+    R.ckey = ckey(clonemind.key)
+    R.mind = "\ref[clonemind]"
     R.id = copytext(md5(R.dna.real_name), 2, 6)
     R.name = R.dna.real_name
     R.types = DNA2_BUF_UI | DNA2_BUF_UE | DNA2_BUF_SE

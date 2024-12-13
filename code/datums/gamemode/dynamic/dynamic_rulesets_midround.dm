@@ -1127,7 +1127,6 @@
 		if(locate(/spell/targeted/ghost/divergentclone) in G.spell_list)
 			continue
 		valids += G
-	message_admins("Found [valids.len] valid divergent clone candidates.")
 	if(valids.len == 0)
 		if(forced)
 			message_admins("Tried to force divergent clone, but no valid candidates found.")
@@ -1138,9 +1137,7 @@
 		//Check that the pod has cloned something before
 		if(pod.cloned_records.len > 0)
 			clonepods += pod
-	if(clonepods.len == 0)
-		if(forced)
-			message_admins("Tried to force divergent clone, but no valid pods found.")
+	if(!forced && clonepods.len == 0)
 		return 0
 	return ..()
 
