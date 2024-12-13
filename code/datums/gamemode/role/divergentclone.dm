@@ -221,6 +221,43 @@
             antag.memory[MIND_MEMORY_ANTAGONIST] = unredact_uplink_pw(antag.memory[MIND_MEMORY_ANTAGONIST], uplink)
             uplink_pw_revealed = TRUE
 
+/datum/role/divergentclone/AdminPanelEntry(var/show_logo = FALSE,var/datum/admins/A)
+    var/icon/logo = icon(logo_icon, logo_state)
+    if(!antag)
+        return {"Mind destroyed. That shouldn't ever happen."}
+    if (!ismob(usr))
+        return
+    var/mob/user = usr
+    if (!(user.ckey in voice_per_admin))
+        voice_per_admin[user.ckey] = default_admin_voice
+    var/mob/M
+    if(has_spawned_in)
+        M = antag.current
+    else
+        for(var/mob/dead/observer/G in player_list)
+            if(G.mind == antag)
+                M = G
+                break
+            
+    if (M && has_spawned_in)
+        return {"[show_logo ? "<img src='data:image/png;base64,[icon2base64(logo)]' style='position: relative; top: 10;'/> " : "" ]
+    [name] <a href='?_src_=holder;adminplayeropts=\ref[M]'>[M.real_name]/[antag.key]</a>[M.client ? "" : " <i> - ([loggedOutHow()])</i>"][M.stat == DEAD ? " <b><font color=red> - (DEAD)</font></b>" : ""]
+     - <a href='?src=\ref[usr];priv_msg=\ref[M]'>(admin PM)</a>
+     - <a href='?_src_=holder;traitor=\ref[M]'>(role panel)</a>
+     - <a href='?src=\ref[src]&mind=\ref[antag]&role_speak=\ref[M]'>(Message as:</a><a href='?src=\ref[src]&mind=\ref[antag]&role_set_speaker=\ref[M]'>\[[voice_per_admin[user.ckey]]\])</a>"}
+    else if (M && !has_spawned_in)
+        return {"[show_logo ? "<img src='data:image/png;base64,[icon2base64(logo)]' style='position: relative; top: 10;'/> " : "" ]
+    [name] <a href='?_src_=holder;adminplayeropts=\ref[M]'>[M.real_name]/[antag.key]</a>[M.client ? "" : " <i> - ([loggedOutHow()])</i>"][" <b><font color=red> - (NOT YET REINCARNATED)</font></b>"]
+     - <a href='?src=\ref[usr];priv_msg=\ref[M]'>(admin PM)</a>
+     - <a href='?_src_=holder;traitor=\ref[M]'>(role panel)</a>
+     - <a href='?src=\ref[src]&mind=\ref[antag]&role_speak=\ref[M]'>(Message as:</a><a href='?src=\ref[src]&mind=\ref[antag]&role_set_speaker=\ref[M]'>\[[voice_per_admin[user.ckey]]\])</a>"}
+    else
+        return {"[show_logo ? "<img src='data:image/png;base64,[icon2base64(logo)]' style='position: relative; top: 10;'/> " : "" ]
+    [name] [antag.name]/[antag.key]<b><font color=red> - (DESTROYED)</font></b>
+     - <a href='?src=\ref[usr];priv_msg=\ref[M]'>(priv msg)</a>
+     - <a href='?_src_=holder;traitor=\ref[M]'>(role panel)</a>
+     - <a href='?src=\ref[src]&mind=\ref[antag]&role_speak=\ref[M]'>(Message as:</a><a href='?src=\ref[src]&mind=\ref[antag]&role_set_speaker=\ref[M]'>\[[voice_per_admin[user.ckey]]\])</a>"}
+
 
 /datum/role/divergentclone/proc/redact_uplink_pw(var/memory)
     var/regex/passcode_regex = new(@"<B>Uplink Passcode:</B> ([\d]{3} (?:Alpha|Bravo|Delta|Omega))")
