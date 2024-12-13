@@ -18,6 +18,7 @@
     var/extra_role_memory = ""
     var/uplink_pw_revealed = FALSE
     var/datum/component/uplink/uplink = null
+    var/uplink_created_for_us = FALSE
 
     //If the clone is evil, they get traitor objectives:
     // - If the clone is evil but the original is not a traitor, they get NEW objectives
@@ -47,23 +48,7 @@
 
     if(evil)
         antag.current << sound('sound/voice/syndicate_intro.ogg')
-
-    if(evil && !original_mind.GetRole(TRAITOR))
-        //Find the original's PDA and add an uplink to it, if possible
-        var/origname = original_mind.name
-        for(var/obj/item/device/pda/P in PDAs)
-            if(P.owner == origname)
-                if(P.get_component(/datum/component/uplink))
-                    //If they somehow already have one, use that instead.
-                    uplink = P.get_component(/datum/component/uplink)
-                else
-                    uplink = P.add_component(/datum/component/uplink)
-                antag.total_TC += uplink.telecrystals
-                break
-    else if(original_mind.GetRole(TRAITOR))
-        var/datum/role/traitor/orig_role = original_mind.GetRole(TRAITOR)
-        if(orig_role)
-            uplink = orig_role.uplink
+    find_or_create_uplink()
     if(evil && uplink && (amnesia == 0 || amnesia == 2))
         uplink_pw_revealed = TRUE
 
@@ -76,6 +61,34 @@
     Greet(GREET_DEFAULT)
     ForgeObjectives()
     AnnounceObjectives()
+    return 1
+
+/datum/role/divergentclone/proc/find_or_create_uplink()
+    if(evil && !original_mind.GetRole(TRAITOR))
+        //Find the original's PDA and add an uplink to it, if possible
+        var/origname = original_mind.name
+        for(var/obj/item/device/pda/P in PDAs)
+            if(P.owner == origname)
+                if(P.get_component(/datum/component/uplink))
+                    //If they somehow already have one, use that instead.
+                    uplink = P.get_component(/datum/component/uplink)
+                else
+                    uplink = P.add_component(/datum/component/uplink)
+                    uplink_created_for_us = TRUE
+                antag.total_TC += uplink.telecrystals
+                break
+    else if(original_mind.GetRole(TRAITOR))
+        var/datum/role/traitor/orig_role = original_mind.GetRole(TRAITOR)
+        if(orig_role)
+            uplink = orig_role.uplink
+
+    if(!uplink)
+        return 0
+
+    if(uplink_pw_revealed)
+        antag.store_memory("<B>Uplink Passcode:</B> [uplink.unlock_code] ([P.name]).", category=MIND_MEMORY_ANTAGONIST, forced=TRUE)
+    else
+        antag.store_memory("<B>Uplink Passcode:</B> \[REDACTED\] ([P.name]).", category=MIND_MEMORY_ANTAGONIST, forced=TRUE)
     return 1
 
 /datum/role/divergentclone/proc/set_original_mind(var/datum/mind/mind)
@@ -121,10 +134,8 @@
         var/obj/item/device/pda/P = uplink.parent
         if(uplink_pw_revealed)
             to_chat(antag.current, "<span class='warning'>You remember that your [P.name] is actually a Syndicate Uplink. If you manage to recover it, you may enter the code \"[uplink.unlock_code]\" as its ringtone to unlock its hidden features.</span>")
-            antag.store_memory("<B>Uplink Passcode:</B> [uplink.unlock_code] ([P.name]).", category=MIND_MEMORY_ANTAGONIST, forced=TRUE)
         else
             to_chat(antag.current, "<span class='warning'>You remember that your [P.name] is actually a Syndicate Uplink. However, you can't seem to remember the passcode off the top of your head. It will come back to you if you manage to recover the device.</span>")
-            antag.store_memory("<B>Uplink Passcode:</B> \[REDACTED\] ([P.name]).", category=MIND_MEMORY_ANTAGONIST, forced=TRUE)
     else if(!uplink && evil)
         to_chat(antag.current, "<span class='warning'>Unfortunately you don't remember having ever been provided with a Syndicate Uplink.</span>")
 
@@ -258,6 +269,74 @@
      - <a href='?_src_=holder;traitor=\ref[M]'>(role panel)</a>
      - <a href='?src=\ref[src]&mind=\ref[antag]&role_speak=\ref[M]'>(Message as:</a><a href='?src=\ref[src]&mind=\ref[antag]&role_set_speaker=\ref[M]'>\[[voice_per_admin[user.ckey]]\])</a>"}
 
+/datum/role/divergentclone/extraPanelButtons()
+    var/dat = ""
+    if(!has_spawned_in)
+        dat += "<b>Evil (will be traitor): </b> [evil ? "Yes" : "No"] <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];toggleEvil=1;'>(Toggle)</a><br>"
+        
+        dat += "<b>Amnesia level: </b>"
+        switch(amnesia)
+            if(0)
+                dat += "0 (Excellent memory)"
+            if(1)
+                dat += "1 (Normal memory)"
+            if(2)
+                dat += "2 (Hazy memory)"
+        if(amnesia != 0)
+            dat += " <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];setAmnesia=0;'>(Set to Excellent)</a>"
+        if(amnesia != 1)
+            dat += " <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];setAmnesia=1;'>(Set to Normal)</a>"
+        if(amnesia != 2)
+            dat += " <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];setAmnesia=2;'>(Set to Hazy)</a>"
+        dat += "<br>"
+
+
+    else
+        if(uplink)
+            dat += "<b>Uplink found:</b> [uplink.parent.name] [uplink_pw_revealed ? "(knows the passcode)" : "(does not know passcode)"]<br>"
+            dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];revealUplinkPW=1;'>(Reveal passcode)</a><br>"
+            dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];telecrystalsSet=1;'>Telecrystals: [uplink.telecrystals](Set telecrystals)</a><br>"
+            dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];removeuplink=1;'>(Remove uplink)</a><br>"
+            dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];jumpToUplink=1;'>(Jump to uplink's position)</a><br>"
+        else
+            dat = " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];giveuplink=1;'>(Give uplink)</a><br>"
+    return dat
+
+/datum/role/divergentclone/RoleTopic(href, href_list, var/datum/mind/M, var/admin_auth)
+    ..()
+    if(href_list["toggleEvil"])
+        evil = !evil
+        to_chat(usr, "<span class='notice'>The clone will now reincarnate as [evil ? "a traitor" : "a neutral clone"].</span>")
+    if(href_list["setAmnesia"])
+        amnesia = href_list["setAmnesia"]
+        to_chat(usr, "<span class='notice'>The clone's amnesia level has been set to [amnesia].</span>")
+    if(href_list["jumpToUplink"])
+        if(uplink)
+            usr.forceMove(get_turf(uplink.parent))
+    if(href_list["revealUplinkPW"] && !uplink_pw_revealed)
+        antag.current << sound('sound/voice/syndicate_intro.ogg')
+        to_chat(antag.current, "<span class='warning'>You suddenly remember the passcode for your uplink: \"[uplink.unlock_code]\".</span>")
+        antag.memory[MIND_MEMORY_ANTAGONIST] = unredact_uplink_pw(antag.memory[MIND_MEMORY_ANTAGONIST], uplink)
+        uplink_pw_revealed = TRUE
+    if(href_list["giveuplink"])
+        find_or_create_uplink()
+        to_chat(usr, "<span class='notice'>[uplink.parent.name] is now the clone's uplink.</span>")
+    if(href_list["telecrystalsSet"])
+        if(!uplink)
+            to_chat(usr, "<span class='warning'>Oops, couldn't find the uplink! This shouldn't happen!</span>")
+        var/amount = input("What would you like to set their crystal count to?", "Their current count is [uplink.telecrystals]") as null|num
+        if(isnum(amount) && amount >= 0)
+            to_chat(usr, "<span class = 'notice'>You have set [antag]'s uplink telecrystals to [amount].</span>")
+            uplink.telecrystals = amount
+    if(href_list["removeuplink"])
+        if(!uplink_created_for_us)
+            var/result = alert(usr, "This uplink was not created for this divergent clone, i.e. it likely belongs to a traitor who will miss it if you remove it! Are you sure?", "Remove uplink?", "Yes", "No")
+            if(result != "Yes")
+                return
+        QDEL_NULL(uplink)
+        uplink_pw_revealed = FALSE
+        uplink_created_for_us = FALSE
+        to_chat(antag.current, "<span class='warning'>You have been stripped of your uplink.</span>")
 
 /datum/role/divergentclone/proc/redact_uplink_pw(var/memory)
     var/regex/passcode_regex = new(@"<B>Uplink Passcode:</B> ([\d]{3} (?:Alpha|Bravo|Delta|Omega))")
