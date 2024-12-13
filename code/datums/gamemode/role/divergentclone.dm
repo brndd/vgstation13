@@ -330,10 +330,13 @@
                 continue
             var/key = avoid_assoc_duplicate_keys(mind.name, used_keys)
             minds[key] = mind
-        var/datum/mind/selection = input("Which character should the clone spawn in as?", "Choose a character", null, null) as null|anything in minds
+        var/selection = input("Which character should the clone spawn in as?", "Choose a character", null, null) as null|anything in minds
         if(selection)
-            force_spawn_as = minds[selection]
-            to_chat(usr, "<span class='notice'>The clone will now spawn in as [selection.name].</span>")
+            var/datum/mind/mind = minds[selection]
+            if(!mind.current && !mind.body_archive)
+                to_chat(usr, "<span class='warning'>You picked some nonsense that has no body and no body archive. Pick something else.</span>")
+                return
+            to_chat(usr, "<span class='notice'>The clone will now spawn in as [mind].</span>")
     if(href_list["clearForceSpawn"])
         force_spawn_as = null
         to_chat(usr, "<span class='notice'>The clone will now spawn in as the player's choice.</span>")
