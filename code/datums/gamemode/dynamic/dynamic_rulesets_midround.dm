@@ -1152,7 +1152,7 @@
 	H.fully_replace_character_name(null, "\improper spirit of a divergent clone")
 
 	//Give the about-to-be-a-ghost mob the provisional role and objective
-	var/datum/role/divergentclone/new_role = new /datum/role/divergentclone(G.mind, override=TRUE)
+	var/datum/role/divergentclone/new_role = new /datum/role/divergentclone(H.mind, override=TRUE)
 	new_role.ForgeObjectives()
 	new_role.AnnounceObjectives()
 
