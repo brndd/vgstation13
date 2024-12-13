@@ -171,6 +171,7 @@
                         new_obj.target = orig_obj.delayed_target
                     else
                         new_obj.target = orig_obj.target
+                    new_obj.explanation_text = new_obj.format_explanation()
                     AppendObjective(new_obj)
                 else if(istype(O, /datum/objective/target/steal))
                     var/datum/objective/target/steal/orig_obj = O
@@ -178,6 +179,7 @@
                     new_obj.target_amount = orig_obj.target_amount
                     new_obj.target_category = orig_obj.target_category
                     new_obj.steal_target = orig_obj.steal_target
+                    new_obj.explanation_text = new_obj.format_explanation()
                     AppendObjective(new_obj)
                 /*
                 else if(istype(O, /datum/objective/freeform/syndicate))
