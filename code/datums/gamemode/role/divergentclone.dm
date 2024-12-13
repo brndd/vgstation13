@@ -332,7 +332,7 @@
             minds[key] = mind
         var/datum/mind/selection = input("Which character should the clone spawn in as?", "Choose a character", null, null) as null|anything in minds
         if(selection)
-            force_spawn_as = selection
+            force_spawn_as = minds[selection]
             to_chat(usr, "<span class='notice'>The clone will now spawn in as [selection.name].</span>")
     if(href_list["clearForceSpawn"])
         force_spawn_as = null
