@@ -73,9 +73,9 @@
         if(istype(O, /datum/objective/divergentclone/spawn_in))
             objectives.objectives.Remove(O)
     
-    role.Greet(GREET_DEFAULT)
-    role.ForgeObjectives()
-    role.AnnounceObjectives()
+    Greet(GREET_DEFAULT)
+    ForgeObjectives()
+    AnnounceObjectives()
     return 1
 
 /datum/role/divergentclone/proc/set_original_mind(var/datum/mind/mind)

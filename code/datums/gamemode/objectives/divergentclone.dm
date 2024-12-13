@@ -18,7 +18,7 @@
     explanation_text = format_explanation()
     return TRUE
 
-/datum/objective/divergentclone/spawn_in()
+/datum/objective/divergentclone/spawn_in
     explanation_text = "Reincarnate as a divergent clone."
     name = "Reincarnate"
 

@@ -1147,8 +1147,9 @@
 /datum/dynamic_ruleset/midround/from_ghosts/divergentclone/finish_setup(mob/new_character, index)
 	//Create a new dummy body to create a new mind for the ghost.
 	var/L = get_turf(new_character)
-	var/mob/living/carbon/human/new_character = new /mob/living/carbon/human(pick(latejoin))
-	var/mob/dead/observer/G = new_character.ghostize(FALSE)
+	var/mob/living/carbon/human/H = new /mob/living/carbon/human(pick(latejoin))
+	var/mob/dead/observer/G = H.ghostize(FALSE)
+	QDEL_NULL(H)
 	G.forceMove(L)
 	G.add_spell(new /spell/targeted/ghost/divergentclone)
 
