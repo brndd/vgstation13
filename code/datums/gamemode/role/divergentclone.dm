@@ -271,17 +271,16 @@
      - <a href='?src=\ref[src]&mind=\ref[antag]&role_speak=\ref[M]'>(Message as:</a><a href='?src=\ref[src]&mind=\ref[antag]&role_set_speaker=\ref[M]'>\[[voice_per_admin[user.ckey]]\])</a>"}
 
 /datum/role/divergentclone/extraPanelButtons()
-    var/dat = ""
+    var/dat = "<br>"
     if(!has_spawned_in)
         dat += "<b>Evil (will be traitor): </b> [evil ? "Yes" : "No"] <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];toggleEvil=1;'>(Toggle)</a><br>"
         
         dat += "<b>Amnesia level: </b>"
-        switch(amnesia)
-            if(0)
-                dat += "0 (Excellent memory)"
-            if(1)
+        if(amnesia == 0)
+            dat += "0 (Excellent memory)"
+        else if(amnesia == 1)
                 dat += "1 (Normal memory)"
-            if(2)
+        else if(amnesia == 2)
                 dat += "2 (Hazy memory)"
         if(amnesia != 0)
             dat += " <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];setAmnesia=0;'>(Set to Excellent)</a>"
@@ -298,7 +297,7 @@
             var/uplink_name = P ? P.name : "unknown PDA"
             dat += "<b>Uplink found:</b> [uplink_name] [uplink_pw_revealed ? "(knows the passcode)" : "(does not know passcode)"]<br>"
             dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];revealUplinkPW=1;'>(Reveal passcode)</a><br>"
-            dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];telecrystalsSet=1;'>Telecrystals: [uplink.telecrystals](Set telecrystals)</a><br>"
+            dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];telecrystalsSet=1;'>Telecrystals: [uplink.telecrystals] (Set telecrystals)</a><br>"
             dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];removeuplink=1;'>(Remove uplink)</a><br>"
             dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];jumpToUplink=1;'>(Jump to uplink's position)</a><br>"
         else
@@ -311,7 +310,9 @@
         evil = !evil
         to_chat(usr, "<span class='notice'>The clone will now reincarnate as [evil ? "a traitor" : "a neutral clone"].</span>")
     if(href_list["setAmnesia"])
-        amnesia = href_list["setAmnesia"]
+        var/new_amnesia = text2num(href_list["setAmnesia"])
+        if(new_amnesia < 0 || new_amnesia > 2)
+            return
         to_chat(usr, "<span class='notice'>The clone's amnesia level has been set to [amnesia].</span>")
     if(href_list["jumpToUplink"])
         if(uplink)
