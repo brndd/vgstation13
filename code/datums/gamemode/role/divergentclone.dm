@@ -82,10 +82,10 @@
     if(!mind)
         return 0
     //Fix for recursive divergent clones
-    if(original_mind.GetRole(DIVERGENTCLONE))
-        var/datum/role/divergentclone/clone_role = original_mind.GetRole(DIVERGENTCLONE)
+    if(mind.GetRole(DIVERGENTCLONE))
+        var/datum/role/divergentclone/clone_role = mind.GetRole(DIVERGENTCLONE)
         original_mind = clone_role.original_mind
-    src.original_mind = original_mind
+    src.original_mind = mind
     return 1
 
 
