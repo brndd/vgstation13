@@ -161,7 +161,42 @@
             var/datum/role/traitor/orig_role = original_mind.antag_roles[TRAITOR]
             var/datum/objective_holder/holder = orig_role.objectives
             for(var/datum/objective/O in holder.GetObjectives())
-                AppendObjective(O)
+                //AppendObjective(O)
+                //There really seems to be no other way to do this than check all of these one by one
+                if(istype(O, /datum/objective/target/assassinate))
+                    var/datum/objective/target/assassinate/orig_obj = O
+                    var/datum/objective/target/assassinate/new_obj = new(auto_target = FALSE)
+                    new_obj.target_amount = O.target_amount
+                    if(O.delayed_target)
+                        new_obj.target = O.delayed_target
+                    else
+                        new_obj.target = O.target
+                    AppendObjective(new_obj)
+                else if(istype(O, /datum/objective/target/steal))
+                    var/datum/objective/target/steal/orig_obj = O
+                    var/datum/objective/target/steal/new_obj = new(auto_target = FALSE)
+                    new_obj.target_amount = O.target_amount
+                    new_obj.target_category = O.target_category
+                    new_obj.steal_target = O.steal_target
+                    AppendObjective(new_obj)
+                /*
+                else if(istype(O, /datum/objective/freeform/syndicate))
+                    AppendObjective(/datum/objective/freeform/syndicate)
+                else if(istype(O, /datum/objective/die))
+                    AppendObjective(/datum/objective/die)
+                else if(istype(O, /datum/objective/escape))
+                    AppendObjective(/datum/objective/escape)
+                else if(istype(O, /datum/objective/block))
+                    AppendObjective(/datum/objective/block)
+                else if(istype(O, /datum/objective/survive))
+                    AppendObjective(/datum/objective/survive)
+                else if(istype(O, /datum/objective/hijack))
+                    AppendObjective(/datum/objective/hijack)
+                else if(istype(O, /datum/objective/minimize_casualties))
+                    AppendObjective(/datum/objective/minimize_casualties)
+                */
+                else //Just create a new instance instead of deep copying
+                    AppendObjective(new(O.type))
 
         else //copypasted from syndicate.dm and yes I feel bad about it
             if(prob(50))
