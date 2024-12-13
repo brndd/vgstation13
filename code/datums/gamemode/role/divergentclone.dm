@@ -131,7 +131,7 @@
 
 
 /datum/role/divergentclone/ForgeObjectives()
-    if(has_spawned_in)
+    if(!has_spawned_in)
         AppendObjective(/datum/objective/divergentclone/spawn_in)
         return
 
