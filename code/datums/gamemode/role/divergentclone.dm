@@ -279,9 +279,9 @@
         if(amnesia == 0)
             dat += "0 (Excellent memory)"
         else if(amnesia == 1)
-                dat += "1 (Normal memory)"
+            dat += "1 (Normal memory)"
         else if(amnesia == 2)
-                dat += "2 (Hazy memory)"
+            dat += "2 (Hazy memory)"
         if(amnesia != 0)
             dat += " <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];setAmnesia=0;'>(Set to Excellent)</a>"
         if(amnesia != 1)
