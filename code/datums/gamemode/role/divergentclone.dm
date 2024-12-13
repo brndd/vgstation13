@@ -313,7 +313,7 @@
         var/new_amnesia = text2num(href_list["setAmnesia"])
         if(new_amnesia < 0 || new_amnesia > 2)
             return
-        to_chat(usr, "<span class='notice'>The clone's amnesia level has been set to [amnesia].</span>")
+        to_chat(usr, "<span class='notice'>The clone's amnesia level has been set to [new_amnesia].</span>")
     if(href_list["jumpToUplink"])
         if(uplink)
             usr.forceMove(get_turf(uplink.parent))
