@@ -1117,6 +1117,7 @@
 	flags = MINOR_RULESET
 
 /datum/dynamic_ruleset/midround/from_ghosts/divergentclone/trim_candidates()
+	..()
 	for(var/mob/M in dead_players)
 		if(M.mind.GetRole(DIVERGENTCLONE))
 			dead_players -= M
