@@ -327,7 +327,7 @@
         var/list/used_keys[0]
         var/list/minds[0]
         for(var/datum/mind/mind in ticker.minds)
-            if(!mind.current && !mind.body_archive)
+            if(mind == antag || (!mind.current && !mind.body_archive))
                 continue
             var/key = avoid_assoc_duplicate_keys(mind.name, used_keys)
             minds[key] = mind
