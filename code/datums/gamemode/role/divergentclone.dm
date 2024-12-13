@@ -337,6 +337,7 @@
             if(!mind.current && !mind.body_archive)
                 to_chat(usr, "<span class='warning'>You picked some nonsense that has no body and no body archive. Pick something else.</span>")
                 return
+            force_spawn_as = mind
             to_chat(usr, "<span class='notice'>The clone will now spawn in as [mind].</span>")
     if(href_list["clearForceSpawn"])
         force_spawn_as = null
