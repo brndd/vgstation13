@@ -1129,13 +1129,13 @@
 		valids += G
 	message_admins("Found [valids.len] valid divergent clone candidates.")
 	if(valids.len == 0)
-		message_admins("Tried to force divergent clone, but no valid candidates found.")
+		if(forced)
+			message_admins("Tried to force divergent clone, but no valid candidates found.")
 		return 0
 
 	var/list/clonepods = list()
 	for(var/obj/machinery/cloning/clonepod/pod in machines)
 		//Check that the pod has cloned something before
-		//We don't check if the pod is occupied or full of mess, because we'll just wait for this to not be the case once we're spawning.
 		if(pod.cloned_records.len > 0)
 			clonepods += pod
 	if(clonepods.len == 0)
@@ -1145,12 +1145,21 @@
 	return ..()
 
 /datum/dynamic_ruleset/midround/from_ghosts/divergentclone/finish_setup(mob/new_character, index)
-	to_chat(new_character, "<span class='notice'><b>You were selected to be a divergent clone, but will not be spawned in yet!</b></span>")
-	to_chat(new_character, "<span class='notice'>You have been granted the \"Spawn as Divergent Clone\" ghost spell. Use this near a cloning pod to spawn in as a divergent clone of someone who was cloned, or is currently being cloned, in that pod.</span>")
-	to_chat(new_character, "<span class='notice'>Using this spell on an unoccupied cloning pod will allow you to choose a record of a person previously cloned in that pod. Using it on an occupied pod will cause you to become a twin of the person currently in the pod, and be ejected from the pod at the same time as them.</span>")
-	to_chat(new_character, "<span class='notice'>Remember: you can only use this spell once, and re-entering your corpse will remove it permanently. In fact, for your convenience we have removed your ability to re-enter your corpse.</span>")
-	
-	var/mob/dead/observer/G = new_character.ghostize(FALSE)	//sanity, plus to save people from their stupidity we don't allow re-entering
+	//Create a new dummy body to create a new mind for the ghost.
+	var/L = get_turf(new_character)
+	var/mob/living/carbon/human/new_character = new /mob/living/carbon/human(pick(latejoin))
+	var/mob/dead/observer/G = new_character.ghostize(FALSE)
+	G.forceMove(L)
 	G.add_spell(new /spell/targeted/ghost/divergentclone)
-	//we don't assign any roles, objectives or anything here -- that's done when the cloning is finished
+
+	to_chat(G, "<span class='notice'><b>You were selected to be a divergent clone, but will not be spawned in yet!</b></span>")
+	to_chat(G, "<span class='notice'>You have been granted the \"Spawn as Divergent Clone\" ghost spell. Use this near a cloning pod to spawn in as a divergent clone of someone who was cloned, or is currently being cloned, in that pod.</span>")
+	to_chat(G, "<span class='notice'>Using this spell on an unoccupied cloning pod will allow you to choose a record of a person previously cloned in that pod. Using it on an occupied pod will cause you to become a twin of the person currently in the pod, and be ejected from the pod at the same time as them.</span>")
+	to_chat(G, "<span class='notice'>Remember: you can only use this spell once, and re-entering your corpse will remove it permanently. In fact, for your convenience we have removed your ability to re-enter your corpse.</span>")
+
+	//Give the ghost the provisional role and objective
+	var/datum/role/divergentclone/new_role = new /datum/role/divergentclone(G.mind, override=TRUE)
+	new_role.ForgeObjectives()
+	new_role.AnnounceObjectives()
+	
 

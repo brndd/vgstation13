@@ -13,6 +13,7 @@
     wikiroute = DIVERGENTCLONE
     default_admin_voice = "The Ancient Reptilian Brain"
     admin_voice_style = "bold"
+    var/has_spawned_in = FALSE
     var/datum/mind/original_mind = null
     var/extra_role_memory = ""
     var/uplink_pw_revealed = FALSE
@@ -28,23 +29,21 @@
     var/evil = 0 //0: neutral clone, 1: traitor
     var/amnesia = 0 //0: excellent memory, 1: normal memory, 2: hazy memory
 
-/datum/role/divergentclone/New(var/datum/mind/M, var/datum/faction/fac=null, var/new_id, var/override = FALSE, var/datum/mind/original_mind = null)
+/datum/role/divergentclone/New(var/datum/mind/M, var/datum/faction/fac=null, var/new_id, var/override = FALSE)
     . = ..()
-    if(!original_mind)
-        Drop()
-        return 0
-    //Fix for recursive divergent clones
-    if(original_mind.GetRole(DIVERGENTCLONE))
-        var/datum/role/divergentclone/clone_role = original_mind.GetRole(DIVERGENTCLONE)
-        original_mind = clone_role.original_mind
-    src.original_mind = original_mind
     evil = prob(50)
     amnesia = pick(0, 1, 2)
     return 1
 
-/datum/role/divergentclone/OnPostSetup(laterole)
-    . = ..()
-    ForgeMemory()
+/datum/role/divergentclone/proc/on_spawn_in(var/datum/mind/original_mind = null)
+    if(has_spawned_in)
+        return 0
+
+    set_original_mind(original_mind)
+    if(!src.original_mind)
+        return 0
+    
+    forge_memory()
 
     if(evil)
         antag.current << sound('sound/voice/syndicate_intro.ogg')
@@ -68,8 +67,32 @@
     if(evil && uplink && (amnesia == 0 || amnesia == 2))
         uplink_pw_revealed = TRUE
 
+    has_spawned_in = TRUE
+    //Remove the "spawn in" objective
+    for(var/datum/objective/O in objectives.GetObjectives())
+        if(istype(O, /datum/objective/divergentclone/spawn_in))
+            objectives.objectives.Remove(O)
+    
+    role.Greet(GREET_DEFAULT)
+    role.ForgeObjectives()
+    role.AnnounceObjectives()
+    return 1
+
+/datum/role/divergentclone/proc/set_original_mind(var/datum/mind/mind)
+    if(!mind)
+        return 0
+    //Fix for recursive divergent clones
+    if(original_mind.GetRole(DIVERGENTCLONE))
+        var/datum/role/divergentclone/clone_role = original_mind.GetRole(DIVERGENTCLONE)
+        original_mind = clone_role.original_mind
+    src.original_mind = original_mind
+    return 1
+
 
 /datum/role/divergentclone/Greet(var/greeting, var/custom)
+    if(!has_spawned_in)
+        return
+
     . = ..()
     if(!greeting)
         return
@@ -82,7 +105,7 @@
         to_chat(antag.current, "<span class='danger'>Remember that while your unique position may lead to conflict with your original copy, you are not an enemy of the station or the crew in general!</span>")
     to_chat(antag.current, "<span class='notice'>Your memory may contain useful information about the original you. You should review it using the Notes verb under the IC tab.</span>")
 
-    var/original_is_traitor = original_mind.GetRole(TRAITOR)
+    var/original_is_traitor = original_mind ? original_mind.GetRole(TRAITOR) : null
     if(evil && amnesia == 0 && original_is_traitor) //Traitor and knows the original is too
         to_chat(antag.current, "<span class='warning'>You are a Syndicate traitor through and through, just like your original copy. You have the same objectives they do, but cooperation is optional.</span>")
     else if(evil && amnesia == 0 && !original_is_traitor) //Traitor and knows the original is not
@@ -108,6 +131,10 @@
 
 
 /datum/role/divergentclone/ForgeObjectives()
+    if(has_spawned_in)
+        AppendObjective(/datum/objective/divergentclone/spawn_in)
+        return
+
     //The basic divergent clone objective
     if(evil)
         AppendObjective(/datum/objective/freeform/divergentclone_evil)
@@ -157,7 +184,7 @@
                                 AppendObjective(/datum/objective/minimize_casualties)
     
 
-/datum/role/divergentclone/proc/ForgeMemory()
+/datum/role/divergentclone/proc/forge_memory()
     var/list/new_memory = list(MIND_MEMORY_GENERAL = "", MIND_MEMORY_ANTAGONIST = "", MIND_MEMORY_CUSTOM = "")
     //All clones remember their original's general and custom memory
     new_memory[MIND_MEMORY_GENERAL] = original_mind.memory[MIND_MEMORY_GENERAL]
@@ -182,7 +209,7 @@
 
 /datum/role/divergentclone/process()
     ..()
-    if(antag.current.gcDestroyed || antag.current.stat == DEAD)
+    if(!has_spawned_in || antag.current.gcDestroyed || antag.current.stat == DEAD)
         return // dead or destroyed
     
     //check if we've found the uplink and should reveal the passcode
@@ -316,12 +343,17 @@
         to_chat(ghost, "<span class='warning'>Clone divergence failed. Please try again.</span>")
         return
     
-    //Add the role to the clone
-    var/datum/role/divergentclone/role = new /datum/role/divergentclone(clone.mind, override=TRUE, original_mind=original_mind)
-    if(!role)
+    var/datum/role/divergentclone/role = clone.mind.GetRole(DIVERGENTCLONE)
+    if(!role) //if they somehow don't have the role already, give it to them
+        role = new /datum/role/divergentclone(clone.mind, override=TRUE)
+        if(!role)
+            to_chat(ghost, "<span class='warning'>Clone divergence failed. Please try again.</span>")
+            return
+    if(!role.on_spawn_in(original_mind))
         to_chat(ghost, "<span class='warning'>Clone divergence failed. Please try again.</span>")
         return
-    role.OnPostSetup()
+
+    //Re-do greetings and objectives
     role.Greet(GREET_DEFAULT)
     role.ForgeObjectives()
     role.AnnounceObjectives()
@@ -349,7 +381,7 @@
     return pod
 
 /spell/targeted/ghost/divergentclone/proc/clone_twin(var/obj/machinery/cloning/clonepod/pod, var/mob/living/original, var/datum/mind/clonemind)
-    var/mob/living/clone = pod.growtwin(original, clonemind, do_mind_transfer=FALSE, allow_multiple=TRUE, force_clone=TRUE)
+    var/mob/living/clone = pod.growtwin(original, clonemind, do_mind_transfer=TRUE, allow_multiple=TRUE, force_clone=TRUE)
     if(!clone)
         return null
     var/datum/mind/new_mind = clone.mind
@@ -380,7 +412,7 @@
     R.times_cloned = orig_record.times_cloned
     R.talkcount = orig_record.talkcount
 
-    var/mob/living/carbon/human/clone = pod.growclone(R, copy_progress_from=null, do_mind_transfer=FALSE, allow_multiple=FALSE, force_clone=TRUE)
+    var/mob/living/carbon/human/clone = pod.growclone(R, copy_progress_from=null, do_mind_transfer=TRUE, allow_multiple=FALSE, force_clone=TRUE)
     var/datum/mind/new_mind = clone.mind
     var/datum/mind/orig_mind = locate(orig_record.mind)
     new_mind.name = orig_mind.name

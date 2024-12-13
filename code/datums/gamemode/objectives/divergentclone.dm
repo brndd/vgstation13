@@ -18,6 +18,20 @@
     explanation_text = format_explanation()
     return TRUE
 
+/datum/objective/divergentclone/spawn_in()
+    explanation_text = "Reincarnate as a divergent clone."
+    name = "Reincarnate"
+
+/datum/objective/divergentclone/spawn_in/IsFulfilled()
+    if(..())
+        return TRUE
+    if(!owner || !owner.current)
+        return FALSE
+
+    var/datum/role/divergentclone/role = owner.GetRole(DIVERGENTCLONE)
+    if(role && role.has_spawned_in)
+        return TRUE
+
 /datum/objective/acquire_personal_id
     explanation_text = "Acquire an ID card matching your name or DNA."
     name = "Acquire personal ID card"
