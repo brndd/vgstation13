@@ -1148,6 +1148,7 @@
 	//Create a new dummy body to create a new mind for the ghost.
 	var/L = get_turf(new_character)
 	var/mob/living/carbon/human/H = new /mob/living/carbon/human(pick(latejoin))
+	H.ckey = new_character.ckey
 	var/mob/dead/observer/G = H.ghostize(FALSE)
 	QDEL_NULL(H)
 	G.forceMove(L)
