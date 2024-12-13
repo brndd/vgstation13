@@ -452,9 +452,9 @@
     var/mob/dead/observer/ghost = holder
     ASSERT(istype(ghost))
     
-    var/datum/role/divergentclone/role = clone.mind.GetRole(DIVERGENTCLONE)
+    var/datum/role/divergentclone/role = ghost.mind.GetRole(DIVERGENTCLONE)
     if(!role) //if they somehow don't have the role already, give it to them
-        role = new /datum/role/divergentclone(clone.mind, override=TRUE)
+        role = new /datum/role/divergentclone(ghost.mind, override=TRUE)
         if(!role)
             to_chat(ghost, "<span class='warning'>Clone divergence failed. Please try again.</span>")
             return
