@@ -166,18 +166,18 @@
                 if(istype(O, /datum/objective/target/assassinate))
                     var/datum/objective/target/assassinate/orig_obj = O
                     var/datum/objective/target/assassinate/new_obj = new(auto_target = FALSE)
-                    new_obj.target_amount = O.target_amount
-                    if(O.delayed_target)
-                        new_obj.target = O.delayed_target
+                    new_obj.target_amount = orig_obj.target_amount
+                    if(orig_obj.delayed_target)
+                        new_obj.target = orig_obj.delayed_target
                     else
-                        new_obj.target = O.target
+                        new_obj.target = orig_obj.target
                     AppendObjective(new_obj)
                 else if(istype(O, /datum/objective/target/steal))
                     var/datum/objective/target/steal/orig_obj = O
                     var/datum/objective/target/steal/new_obj = new(auto_target = FALSE)
-                    new_obj.target_amount = O.target_amount
-                    new_obj.target_category = O.target_category
-                    new_obj.steal_target = O.steal_target
+                    new_obj.target_amount = orig_obj.target_amount
+                    new_obj.target_category = orig_obj.target_category
+                    new_obj.steal_target = orig_obj.steal_target
                     AppendObjective(new_obj)
                 /*
                 else if(istype(O, /datum/objective/freeform/syndicate))
@@ -196,7 +196,7 @@
                     AppendObjective(/datum/objective/minimize_casualties)
                 */
                 else //Just create a new instance instead of deep copying
-                    AppendObjective(new(O.type))
+                    AppendObjective(new O.type)
 
         else //copypasted from syndicate.dm and yes I feel bad about it
             if(prob(50))
