@@ -85,6 +85,7 @@
     if(!uplink)
         return 0
 
+    var/obj/item/device/pda/P = uplink.parent
     if(uplink_pw_revealed)
         antag.store_memory("<B>Uplink Passcode:</B> [uplink.unlock_code] ([P.name]).", category=MIND_MEMORY_ANTAGONIST, forced=TRUE)
     else
@@ -293,7 +294,9 @@
 
     else
         if(uplink)
-            dat += "<b>Uplink found:</b> [uplink.parent.name] [uplink_pw_revealed ? "(knows the passcode)" : "(does not know passcode)"]<br>"
+            var/obj/item/device/pda/P = uplink.parent
+            var/uplink_name = P ? P.name : "unknown PDA"
+            dat += "<b>Uplink found:</b> [uplink_name] [uplink_pw_revealed ? "(knows the passcode)" : "(does not know passcode)"]<br>"
             dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];revealUplinkPW=1;'>(Reveal passcode)</a><br>"
             dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];telecrystalsSet=1;'>Telecrystals: [uplink.telecrystals](Set telecrystals)</a><br>"
             dat += " - <a href='?src=\ref[antag];mind=\ref[antag];role=\ref[src];removeuplink=1;'>(Remove uplink)</a><br>"
@@ -320,7 +323,9 @@
         uplink_pw_revealed = TRUE
     if(href_list["giveuplink"])
         find_or_create_uplink()
-        to_chat(usr, "<span class='notice'>[uplink.parent.name] is now the clone's uplink.</span>")
+        var/obj/item/device/pda/P = uplink.parent
+        if(P)
+            to_chat(usr, "<span class='notice'>[P.name] is now the clone's uplink.</span>")
     if(href_list["telecrystalsSet"])
         if(!uplink)
             to_chat(usr, "<span class='warning'>Oops, couldn't find the uplink! This shouldn't happen!</span>")
