@@ -1149,6 +1149,13 @@
 	var/L = get_turf(new_character)
 	var/mob/living/carbon/human/H = new /mob/living/carbon/human(pick(latejoin))
 	H.ckey = new_character.ckey
+	H.fully_replace_character_name(null, "\improper spirit of a divergent clone")
+
+	//Give the about-to-be-a-ghost mob the provisional role and objective
+	var/datum/role/divergentclone/new_role = new /datum/role/divergentclone(G.mind, override=TRUE)
+	new_role.ForgeObjectives()
+	new_role.AnnounceObjectives()
+
 	var/mob/dead/observer/G = H.ghostize(FALSE)
 	QDEL_NULL(H)
 	G.forceMove(L)
@@ -1157,11 +1164,5 @@
 	to_chat(G, "<span class='notice'><b>You were selected to be a divergent clone, but will not be spawned in yet!</b></span>")
 	to_chat(G, "<span class='notice'>You have been granted the \"Spawn as Divergent Clone\" ghost spell. Use this near a cloning pod to spawn in as a divergent clone of someone who was cloned, or is currently being cloned, in that pod.</span>")
 	to_chat(G, "<span class='notice'>Using this spell on an unoccupied cloning pod will allow you to choose a record of a person previously cloned in that pod. Using it on an occupied pod will cause you to become a twin of the person currently in the pod, and be ejected from the pod at the same time as them.</span>")
-	to_chat(G, "<span class='notice'>Remember: you can only use this spell once, and re-entering your corpse will remove it permanently. In fact, for your convenience we have removed your ability to re-enter your corpse.</span>")
-
-	//Give the ghost the provisional role and objective
-	var/datum/role/divergentclone/new_role = new /datum/role/divergentclone(G.mind, override=TRUE)
-	new_role.ForgeObjectives()
-	new_role.AnnounceObjectives()
-	
+	to_chat(G, "<span class='notice'>Remember: you can only use this spell once, and re-entering your corpse will remove it permanently. In fact, for your convenience we have removed your ability to re-enter your corpse.</span>")	
 
