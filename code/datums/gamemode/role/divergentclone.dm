@@ -346,6 +346,8 @@
         if(!force_spawn_as)
             to_chat(usr, "<span class='warning'>Cannot force spawn without a character selected!</span>")
             return
+        if(alert(usr, "Are you sure you want to force spawn the clone as [force_spawn_as]?", "Force spawn?", "Yes", "No") != "Yes")
+            return
         var/obj/machinery/cloning/clonepod/pod
         var/dist = 100
         for(var/obj/machinery/cloning/clonepod/P in range(usr, 7))
