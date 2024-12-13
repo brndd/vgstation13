@@ -406,6 +406,55 @@
 
 	return H
 
+//Used for cloning divergent clones
+/obj/machinery/cloning/clonepod/proc/clone_divergent_twin(var/mob/living/original, var/datum/mind/clonemind)
+    var/mob/living/clone = growtwin(original, clonemind, do_mind_transfer=TRUE, allow_multiple=TRUE, force_clone=TRUE)
+    if(!clone)
+        return null
+    var/datum/mind/new_mind = clone.mind
+    var/datum/mind/orig_mind = original.mind
+    new_mind.name = orig_mind.name
+    //new_mind.memory = orig_mind.memory
+    new_mind.assigned_role = orig_mind.assigned_role
+    new_mind.body_archive = orig_mind.body_archive
+    new_mind.role_alt_title = orig_mind.role_alt_title
+    new_mind.miming = orig_mind.miming
+    new_mind.faith = orig_mind.faith
+    new_mind.initial_account = orig_mind.initial_account
+    new_mind.initial_wallet_funds = orig_mind.initial_wallet_funds
+
+    return clone
+
+/obj/machinery/cloning/clonepod/proc/clone_divergent_record(var/datum/dna2/record/orig_record, var/datum/mind/clonemind)
+    var/datum/dna2/record/R = new /datum/dna2/record()
+    R.dna = orig_record.dna.Clone()
+    R.ckey = ckey(clonemind.key)
+    R.mind = "\ref[clonemind]"
+    R.id = copytext(md5(R.dna.real_name), 2, 6)
+    R.name = R.dna.real_name
+    R.types = DNA2_BUF_UI | DNA2_BUF_UE | DNA2_BUF_SE
+    R.languages = orig_record.languages.Copy()
+    R.attack_log = orig_record.attack_log.Copy()
+    R.default_language = orig_record.default_language
+    R.times_cloned = orig_record.times_cloned
+    R.talkcount = orig_record.talkcount
+
+    var/mob/living/carbon/human/clone = growclone(R, copy_progress_from=null, do_mind_transfer=TRUE, allow_multiple=FALSE, force_clone=TRUE)
+    var/datum/mind/new_mind = clone.mind
+    var/datum/mind/orig_mind = locate(orig_record.mind)
+    new_mind.name = orig_mind.name
+    //new_mind.memory = orig_mind.memory
+    new_mind.assigned_role = orig_mind.assigned_role
+    new_mind.body_archive = orig_mind.body_archive
+    new_mind.role_alt_title = orig_mind.role_alt_title
+    new_mind.miming = orig_mind.miming
+    new_mind.faith = orig_mind.faith
+    new_mind.initial_account = orig_mind.initial_account
+    new_mind.initial_wallet_funds = orig_mind.initial_wallet_funds
+
+    return clone
+
+
 //Grow clones to maturity then kick them out.  FREELOADERS
 /obj/machinery/cloning/clonepod/process()
 	if(stat & (FORCEDISABLE|NOPOWER)) //Autoeject if power is lost

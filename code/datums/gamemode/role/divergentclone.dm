@@ -325,12 +325,12 @@
     if(href_list["setForceSpawn"])
         var/list/used_keys[0]
         var/list/minds[0]
-        for(var/datum/mind/M in ticker.minds)
-            if(!M.current && !M.body_archive)
+        for(var/datum/mind/mind in ticker.minds)
+            if(!mind.current && !mind.body_archive)
                 continue
-            var/key = avoid_assoc_duplicate_keys(M.name, used_keys)
-            minds[key] = M
-        var/selection = input("Which character should the clone spawn in as?", "Choose a character", null, null) as null|anything in minds
+            var/key = avoid_assoc_duplicate_keys(mind.name, used_keys)
+            minds[key] = mind
+        var/datum/mind/selection = input("Which character should the clone spawn in as?", "Choose a character", null, null) as null|anything in minds
         if(selection)
             force_spawn_as = selection
             to_chat(usr, "<span class='notice'>The clone will now spawn in as [selection.name].</span>")
@@ -359,12 +359,12 @@
         if(force_spawn_as.current && istype(force_spawn_as.current, /mob/living/carbon/human))
             var/mob/living/O = force_spawn_as.current
             original_mind = force_spawn_as
-            clone = clone_twin(pod, O, antag)
+            clone = pod.clone_divergent_twin(O, antag)
         else
             //Try to get a body from the mind's body archive
             var/datum/dna2/record/D = force_spawn_as.body_archive.data["dna_records"]
             original_mind = force_spawn_as
-            clone = clone_record(pod, D, antag)
+            clone = pod.clone_divergent_record(D, antag)
         if(!clone)
             to_chat(usr, "<span class='warning'>Failed to spawn in the clone! This shouldn't happen, but maybe try again?</span>")
             return
@@ -452,6 +452,13 @@
     var/mob/dead/observer/ghost = holder
     ASSERT(istype(ghost))
     
+    var/datum/role/divergentclone/role = clone.mind.GetRole(DIVERGENTCLONE)
+    if(!role) //if they somehow don't have the role already, give it to them
+        role = new /datum/role/divergentclone(clone.mind, override=TRUE)
+        if(!role)
+            to_chat(ghost, "<span class='warning'>Clone divergence failed. Please try again.</span>")
+            return
+
     //Find nearest cloning pod and move to it
     var/obj/machinery/cloning/clonepod/pod
     var/dist = 100
@@ -479,21 +486,21 @@
 
     var/mob/living/clone = null
     var/datum/mind/original_mind = null
-    if(force_spawn_as)
-        if(force_spawn_as.current && istype(force_spawn_as.current, /mob/living/carbon/human))
-            to_chat(ghost, "<span class='warning'>A mysterious force causes you to reincarnate as a clone of [force_spawn_as.name]!</span>")
-            var/mob/living/O = force_spawn_as.current
-            original_mind = force_spawn_as
-            clone = clone_twin(pod, O, ghost.mind)
+    if(role.force_spawn_as)
+        if(role.force_spawn_as.current && istype(role.force_spawn_as.current, /mob/living/carbon/human))
+            to_chat(ghost, "<span class='warning'>A mysterious force causes you to reincarnate as a clone of [role.force_spawn_as.name]!</span>")
+            var/mob/living/O = role.force_spawn_as.current
+            original_mind = role.force_spawn_as
+            clone = pod.clone_divergent_twin(O, ghost.mind)
         else
             //Try to get a body from the mind's body archive
-            var/datum/dna2/record/D = force_spawn_as.body_archive.data["dna_records"]
+            var/datum/dna2/record/D = role.force_spawn_as.body_archive.data["dna_records"]
             to_chat(ghost, "<span class='warning'>A mysterious force causes you to reincarnate as a clone of [D.dna.real_name]!</span>")
-            original_mind = force_spawn_as
-            clone = clone_record(pod, D, ghost.mind)
+            original_mind = role.force_spawn_as
+            clone = pod.clone_divergent_record(D, ghost.mind)
         //If something fails, remove force_spawn_as so the player can try again
         if(!clone)
-            force_spawn_as = null
+            role.force_spawn_as = null
     else
         if(pod.occupants.len > 0)
             var/mob/living/O = null
@@ -523,7 +530,7 @@
                     to_chat(ghost, "<span class='warning'>The occupant seems to have exited the pod. Please try again.</span>")
                     return
             original_mind = O.mind
-            clone = clone_twin(pod, O, ghost.mind)
+            clone = pod.clone_divergent_twin(O, ghost.mind)
         else if(pod.cloned_records.len > 0)
             var/list/used_keys[0]
             var/list/records[0]
@@ -536,7 +543,7 @@
                 return
             var/datum/dna2/record/record = records[selection]
             original_mind = locate(record.mind)
-            clone = clone_record(pod, record, ghost.mind)
+            clone = pod.clone_divergent_record(record, ghost.mind)
 
     if(!clone)
         original_mind = null
@@ -545,12 +552,6 @@
     
     ghost.remove_spell(/spell/targeted/ghost/divergentclone)
 
-    var/datum/role/divergentclone/role = clone.mind.GetRole(DIVERGENTCLONE)
-    if(!role) //if they somehow don't have the role already, give it to them
-        role = new /datum/role/divergentclone(clone.mind, override=TRUE)
-        if(!role)
-            to_chat(ghost, "<span class='warning'>Clone divergence failed. Please try again.</span>")
-            return
     if(!role.on_spawn_in(original_mind))
         stack_trace("Divergent clone failed to spawn in.")
 
@@ -573,49 +574,3 @@
             pod = P
     return pod
 
-/spell/targeted/ghost/divergentclone/proc/clone_twin(var/obj/machinery/cloning/clonepod/pod, var/mob/living/original, var/datum/mind/clonemind)
-    var/mob/living/clone = pod.growtwin(original, clonemind, do_mind_transfer=TRUE, allow_multiple=TRUE, force_clone=TRUE)
-    if(!clone)
-        return null
-    var/datum/mind/new_mind = clone.mind
-    var/datum/mind/orig_mind = original.mind
-    new_mind.name = orig_mind.name
-    //new_mind.memory = orig_mind.memory
-    new_mind.assigned_role = orig_mind.assigned_role
-    new_mind.body_archive = orig_mind.body_archive
-    new_mind.role_alt_title = orig_mind.role_alt_title
-    new_mind.miming = orig_mind.miming
-    new_mind.faith = orig_mind.faith
-    new_mind.initial_account = orig_mind.initial_account
-    new_mind.initial_wallet_funds = orig_mind.initial_wallet_funds
-
-    return clone
-
-/spell/targeted/ghost/divergentclone/proc/clone_record(var/obj/machinery/cloning/clonepod/pod, var/datum/dna2/record/orig_record, var/datum/mind/clonemind)
-    var/datum/dna2/record/R = new /datum/dna2/record()
-    R.dna = orig_record.dna.Clone()
-    R.ckey = ckey(clonemind.key)
-    R.mind = "\ref[clonemind]"
-    R.id = copytext(md5(R.dna.real_name), 2, 6)
-    R.name = R.dna.real_name
-    R.types = DNA2_BUF_UI | DNA2_BUF_UE | DNA2_BUF_SE
-    R.languages = orig_record.languages.Copy()
-    R.attack_log = orig_record.attack_log.Copy()
-    R.default_language = orig_record.default_language
-    R.times_cloned = orig_record.times_cloned
-    R.talkcount = orig_record.talkcount
-
-    var/mob/living/carbon/human/clone = pod.growclone(R, copy_progress_from=null, do_mind_transfer=TRUE, allow_multiple=FALSE, force_clone=TRUE)
-    var/datum/mind/new_mind = clone.mind
-    var/datum/mind/orig_mind = locate(orig_record.mind)
-    new_mind.name = orig_mind.name
-    //new_mind.memory = orig_mind.memory
-    new_mind.assigned_role = orig_mind.assigned_role
-    new_mind.body_archive = orig_mind.body_archive
-    new_mind.role_alt_title = orig_mind.role_alt_title
-    new_mind.miming = orig_mind.miming
-    new_mind.faith = orig_mind.faith
-    new_mind.initial_account = orig_mind.initial_account
-    new_mind.initial_wallet_funds = orig_mind.initial_wallet_funds
-
-    return clone
