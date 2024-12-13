@@ -1116,6 +1116,15 @@
 	makeBody = FALSE
 	flags = MINOR_RULESET
 
+/datum/dynamic_ruleset/midround/from_ghosts/divergentclone/trim_candidates()
+	for(var/mob/M in dead_players)
+		if(M.mind.GetRole(DIVERGENTCLONE))
+			dead_players -= M
+	for(var/mob/M in list_observers)
+		if(M.mind.GetRole(DIVERGENTCLONE))
+			list_observers -= M
+
+
 /datum/dynamic_ruleset/midround/from_ghosts/divergentclone/ready(var/forced = 0)
 	if(!config.revival_cloning)
 		return 0
@@ -1124,7 +1133,7 @@
 	var/list/candies = dead_players + list_observers
 	var/list/valids[0]
 	for(var/mob/dead/observer/G in candies)
-		if(locate(/spell/targeted/ghost/divergentclone) in G.spell_list)
+		if(G.mind.GetRole(DIVERGENTCLONE))
 			continue
 		valids += G
 	if(valids.len == 0)
