@@ -181,22 +181,6 @@
                     new_obj.steal_target = orig_obj.steal_target
                     new_obj.explanation_text = new_obj.format_explanation()
                     AppendObjective(new_obj)
-                /*
-                else if(istype(O, /datum/objective/freeform/syndicate))
-                    AppendObjective(/datum/objective/freeform/syndicate)
-                else if(istype(O, /datum/objective/die))
-                    AppendObjective(/datum/objective/die)
-                else if(istype(O, /datum/objective/escape))
-                    AppendObjective(/datum/objective/escape)
-                else if(istype(O, /datum/objective/block))
-                    AppendObjective(/datum/objective/block)
-                else if(istype(O, /datum/objective/survive))
-                    AppendObjective(/datum/objective/survive)
-                else if(istype(O, /datum/objective/hijack))
-                    AppendObjective(/datum/objective/hijack)
-                else if(istype(O, /datum/objective/minimize_casualties))
-                    AppendObjective(/datum/objective/minimize_casualties)
-                */
                 else //Just create a new instance instead of deep copying
                     AppendObjective(new O.type)
 
