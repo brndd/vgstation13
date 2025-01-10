@@ -30,6 +30,8 @@
 	var/mob/living/silicon/pai/the_pai = user
 	if (. && istype(the_pai) && (!pai_software_required || (pai_software_required in the_pai.software)))
 		return TRUE
+	if (. && istype(user, /mob/living/simple_animal/spiderbot))
+		return TRUE
 	var/mob/living/silicon/robot/R = user
 	if (!istype(R))
 		return FALSE
